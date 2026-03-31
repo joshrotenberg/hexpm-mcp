@@ -2,7 +2,10 @@
 //!
 //! Each tool module exposes a `build(state: Arc<AppState>) -> Tool` function.
 
+pub mod dependencies;
 pub mod info;
+pub mod release;
+pub mod reverse;
 pub mod search;
 
 use schemars::JsonSchema;
