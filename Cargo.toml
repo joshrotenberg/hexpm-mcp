@@ -2,5 +2,44 @@
 name = "hexpm-mcp"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.90"
+description = "MCP server for querying hex.pm - the Elixir/Erlang package registry"
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/joshrotenberg/hexpm-mcp"
+repository = "https://github.com/joshrotenberg/hexpm-mcp"
+keywords = ["mcp", "hex", "elixir", "erlang", "tower"]
+categories = ["development-tools", "web-programming"]
 
 [dependencies]
+# Core MCP
+tower-mcp = { version = "0.9.1", features = ["http"] }
+
+# HTTP client for hex.pm API
+reqwest = { version = "0.12", features = ["json", "gzip"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Schema generation
+schemars = "1"
+
+# Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+wiremock = "0.6"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
