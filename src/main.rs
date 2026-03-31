@@ -54,14 +54,20 @@ async fn main() -> Result<(), tower_mcp::BoxError> {
          Available tools:\n\
          - search_packages: Search for packages by name or keywords\n\
          - get_package_info: Get detailed package information\n\
-         - get_package_versions: List all versions with retirement info";
+         - get_package_versions: List all versions with retirement info\n\
+         - get_release: Get detailed release information including deps and retirement\n\
+         - get_dependencies: Get dependencies for a package version\n\
+         - get_reverse_dependencies: Find packages that depend on a given package";
 
     let router = McpRouter::new()
         .server_info("hexpm-mcp", env!("CARGO_PKG_VERSION"))
         .instructions(instructions)
         .tool(hexpm_mcp::tools::search::build(state.clone()))
         .tool(hexpm_mcp::tools::info::build(state.clone()))
-        .tool(hexpm_mcp::tools::info::build_versions(state.clone()));
+        .tool(hexpm_mcp::tools::info::build_versions(state.clone()))
+        .tool(hexpm_mcp::tools::release::build(state.clone()))
+        .tool(hexpm_mcp::tools::dependencies::build(state.clone()))
+        .tool(hexpm_mcp::tools::reverse::build(state.clone()));
 
     match args.transport {
         Transport::Stdio => {
