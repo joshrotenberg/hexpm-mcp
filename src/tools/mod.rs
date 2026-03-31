@@ -2,6 +2,9 @@
 //!
 //! Each tool module exposes a `build(state: Arc<AppState>) -> Tool` function.
 
+pub mod info;
+pub mod search;
+
 use schemars::JsonSchema;
 use serde::Deserialize;
 
