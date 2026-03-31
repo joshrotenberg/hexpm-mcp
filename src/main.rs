@@ -47,15 +47,21 @@ async fn main() -> Result<(), tower_mcp::BoxError> {
     );
 
     let rate_limit = Duration::from_millis(args.rate_limit_ms);
-    let _state =
+    let state =
         Arc::new(AppState::new(rate_limit).map_err(|e| format!("Failed to create state: {e}"))?);
 
     let instructions = "MCP server for querying hex.pm - the Elixir/Erlang package registry.\n\n\
-         Tools will be added in subsequent releases.";
+         Available tools:\n\
+         - search_packages: Search for packages by name or keywords\n\
+         - get_package_info: Get detailed package information\n\
+         - get_package_versions: List all versions with retirement info";
 
     let router = McpRouter::new()
         .server_info("hexpm-mcp", env!("CARGO_PKG_VERSION"))
-        .instructions(instructions);
+        .instructions(instructions)
+        .tool(hexpm_mcp::tools::search::build(state.clone()))
+        .tool(hexpm_mcp::tools::info::build(state.clone()))
+        .tool(hexpm_mcp::tools::info::build_versions(state.clone()));
 
     match args.transport {
         Transport::Stdio => {
