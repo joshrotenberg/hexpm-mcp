@@ -2,8 +2,11 @@
 //!
 //! Each tool module exposes a `build(state: Arc<AppState>) -> Tool` function.
 
+pub mod compare;
 pub mod dependencies;
+pub mod downloads;
 pub mod info;
+pub mod owners;
 pub mod release;
 pub mod reverse;
 pub mod search;

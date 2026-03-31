@@ -57,7 +57,10 @@ async fn main() -> Result<(), tower_mcp::BoxError> {
          - get_package_versions: List all versions with retirement info\n\
          - get_release: Get detailed release information including deps and retirement\n\
          - get_dependencies: Get dependencies for a package version\n\
-         - get_reverse_dependencies: Find packages that depend on a given package";
+         - get_reverse_dependencies: Find packages that depend on a given package\n\
+         - get_downloads: Get download statistics for a package\n\
+         - get_owners: Get package owners/maintainers\n\
+         - compare_packages: Compare 2-4 packages side by side";
 
     let router = McpRouter::new()
         .server_info("hexpm-mcp", env!("CARGO_PKG_VERSION"))
@@ -67,7 +70,10 @@ async fn main() -> Result<(), tower_mcp::BoxError> {
         .tool(hexpm_mcp::tools::info::build_versions(state.clone()))
         .tool(hexpm_mcp::tools::release::build(state.clone()))
         .tool(hexpm_mcp::tools::dependencies::build(state.clone()))
-        .tool(hexpm_mcp::tools::reverse::build(state.clone()));
+        .tool(hexpm_mcp::tools::reverse::build(state.clone()))
+        .tool(hexpm_mcp::tools::downloads::build(state.clone()))
+        .tool(hexpm_mcp::tools::owners::build(state.clone()))
+        .tool(hexpm_mcp::tools::compare::build(state.clone()));
 
     match args.transport {
         Transport::Stdio => {
