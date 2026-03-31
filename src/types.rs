@@ -171,7 +171,7 @@ pub struct Publisher {
 }
 
 /// Retirement information for a release.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Retirement {
     /// Retirement reason (deprecated, renamed, security, invalid, other).
     #[serde(default)]
