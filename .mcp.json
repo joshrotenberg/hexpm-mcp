@@ -4,6 +4,10 @@
       "command": "mix",
       "args": ["run", "--no-halt", "--", "--transport", "stdio"],
       "cwd": "/Users/joshrotenberg/Code/active/hexpm-mcp"
+    },
+    "hexpm-public": {
+      "type": "http",
+      "url": "https://hexpm-mcp.fly.dev/mcp"
     }
   }
 }

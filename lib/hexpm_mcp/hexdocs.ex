@@ -32,25 +32,19 @@ defmodule HexpmMcp.HexDocs do
   def get_modules(name, version \\ nil) do
     Cache.fetch({:modules, name, version}, docs_ttl(), fn ->
       case fetch_search_data(name, version) do
-        {:ok, data} ->
-          modules =
-            data
-            |> Enum.filter(fn item -> item["type"] in ["module", "behaviour", "protocol"] end)
-            |> Enum.map(fn item ->
-              %{
-                name: item["title"],
-                type: item["type"],
-                doc: item["doc"] || ""
-              }
-            end)
-            |> Enum.sort_by(& &1.name)
-
-          {:ok, modules}
-
-        {:error, _} ->
-          fetch_sidebar_modules(name, version)
+        {:ok, data} -> {:ok, parse_module_list(data)}
+        {:error, _} -> fetch_sidebar_modules(name, version)
       end
     end)
+  end
+
+  defp parse_module_list(data) do
+    data
+    |> Enum.filter(fn item -> item["type"] in ["module", "behaviour", "protocol"] end)
+    |> Enum.map(fn item ->
+      %{name: item["title"], type: item["type"], doc: item["doc"] || ""}
+    end)
+    |> Enum.sort_by(& &1.name)
   end
 
   @doc """
@@ -58,23 +52,19 @@ defmodule HexpmMcp.HexDocs do
   """
   def get_doc_item(name, module, version \\ nil) do
     path = String.replace(module, ".", "/")
-    url = docs_url(name, version, "#{module}.html")
 
     Cache.fetch({:doc_item, name, module, version}, docs_ttl(), fn ->
-      case fetch_html(url) do
-        {:ok, html} ->
-          {:ok, html_to_markdown(html)}
-
-        {:error, _} ->
-          # Try with path-style URL
-          url2 = docs_url(name, version, "#{path}.html")
-
-          case fetch_html(url2) do
-            {:ok, html} -> {:ok, html_to_markdown(html)}
-            error -> error
-          end
+      with {:error, _} <- fetch_doc_page(name, version, "#{module}.html") do
+        fetch_doc_page(name, version, "#{path}.html")
       end
     end)
+  end
+
+  defp fetch_doc_page(name, version, page) do
+    case fetch_html(docs_url(name, version, page)) do
+      {:ok, html} -> {:ok, html_to_markdown(html)}
+      error -> error
+    end
   end
 
   @doc """
@@ -116,25 +106,22 @@ defmodule HexpmMcp.HexDocs do
 
   defp extract_sidebar_url(html, name, version) do
     case Floki.parse_document(html) do
-      {:ok, doc} ->
-        doc
-        |> Floki.find("script[src]")
-        |> Enum.find_value(:error, fn {_, attrs, _} ->
-          src = get_attr(attrs, "src")
-
-          if String.contains?(src, "sidebar_items") do
-            full_url =
-              if String.starts_with?(src, "http"),
-                do: src,
-                else: docs_url(name, version, src)
-
-            {:ok, full_url}
-          end
-        end)
-
-      _ ->
-        :error
+      {:ok, doc} -> find_sidebar_script(doc, name, version)
+      _ -> :error
     end
+  end
+
+  defp find_sidebar_script(doc, name, version) do
+    doc
+    |> Floki.find("script[src]")
+    |> Enum.find_value(:error, fn {_, attrs, _} ->
+      src = get_attr(attrs, "src")
+      if String.contains?(src, "sidebar_items"), do: {:ok, absolute_url(src, name, version)}
+    end)
+  end
+
+  defp absolute_url(src, name, version) do
+    if String.starts_with?(src, "http"), do: src, else: docs_url(name, version, src)
   end
 
   defp fetch_sidebar_nodes(url) do
@@ -186,10 +173,7 @@ defmodule HexpmMcp.HexDocs do
   defp classify_module(_), do: "module"
 
   defp extract_node_doc(%{"nodeGroups" => groups}) when is_list(groups) do
-    # Build a brief summary from the node groups
-    groups
-    |> Enum.map(fn g -> "#{g["name"]}: #{length(g["nodes"] || [])}" end)
-    |> Enum.join(", ")
+    Enum.map_join(groups, ", ", fn g -> "#{g["name"]}: #{length(g["nodes"] || [])}" end)
   end
 
   defp extract_node_doc(_), do: ""
