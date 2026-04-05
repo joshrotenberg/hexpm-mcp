@@ -1,16 +1,8 @@
 name: Deploy to Fly.io
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "lib/**"
-      - "config/**"
-      - "mix.exs"
-      - "mix.lock"
-      - "Dockerfile"
-      - "fly.toml"
-      - ".github/workflows/deploy.yml"
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
