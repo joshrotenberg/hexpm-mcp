@@ -1,0 +1,20 @@
+app = "hexpm-mcp"
+primary_region = "sjc"
+
+[build]
+
+[http_service]
+  internal_port = 8765
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[env]
+  HEXPM_MCP_PORT = "8765"
+  HEXPM_MCP_CACHE_TTL = "300"
+  HEXPM_MCP_DOCS_CACHE_TTL = "3600"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

@@ -1,1 +1,12 @@
-/target
+/_build/
+/cover/
+/deps/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+*.beam
+/tmp/
+hexpm_mcp-*.tar
+.elixir_ls/
+CLAUDE.md
