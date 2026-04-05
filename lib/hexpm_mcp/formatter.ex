@@ -84,6 +84,17 @@ defmodule HexpmMcp.Formatter do
     Enum.map_join(items, "\n", &"- #{&1}")
   end
 
+  defp format_retirement_badge(nil), do: ""
+
+  defp format_retirement_badge(retired) do
+    suffix =
+      if retired.message,
+        do: " - #{retired.reason}: #{retired.message}",
+        else: " - #{retired.reason}"
+
+    " [RETIRED#{suffix}]"
+  end
+
   # ---------------------------------------------------------------------------
   # Tool-specific formatters
   # ---------------------------------------------------------------------------
@@ -170,20 +181,8 @@ defmodule HexpmMcp.Formatter do
       Enum.map_join(data.versions, "\n", fn v ->
         date = format_date(v.inserted_at)
         has_docs = if v.has_docs, do: "docs", else: "no docs"
-
-        retirement_info =
-          if v.retired do
-            suffix =
-              if v.retired.message,
-                do: " - #{v.retired.reason}: #{v.retired.message}",
-                else: " - #{v.retired.reason}"
-
-            " [RETIRED#{suffix}]"
-          else
-            ""
-          end
-
-        "- **#{v.version}** (#{date}) [#{has_docs}]#{retirement_info}"
+        retired = format_retirement_badge(v.retired)
+        "- **#{v.version}** (#{date}) [#{has_docs}]#{retired}"
       end)
 
     header <> entries
@@ -193,54 +192,47 @@ defmodule HexpmMcp.Formatter do
   Format release info as markdown.
   """
   def format_release(data) do
-    sections = ["# #{data.name} v#{data.version}"]
+    retired_banner = format_retired_banner(data.retired)
 
-    sections =
-      if data.retired do
-        msg = if data.retired.message, do: ": #{data.retired.message}", else: ""
-        sections ++ ["", "> **RETIRED** (#{data.retired.reason}#{msg})"]
-      else
-        sections
-      end
+    details = [
+      "",
+      "## Details",
+      "- Publisher: #{data.publisher}",
+      "- Published: #{format_date(data.inserted_at)}",
+      "- Updated: #{format_date(data.updated_at)}",
+      "- Downloads: #{format_number(data.downloads)}",
+      "- Docs: #{if data.has_docs, do: "available", else: "not available"}",
+      "- Build tools: #{Enum.join(data.build_tools, ", ")}"
+    ]
 
-    sections =
-      sections ++
-        [
-          "",
-          "## Details",
-          "- Publisher: #{data.publisher}",
-          "- Published: #{format_date(data.inserted_at)}",
-          "- Updated: #{format_date(data.updated_at)}",
-          "- Downloads: #{format_number(data.downloads)}",
-          "- Docs: #{if data.has_docs, do: "available", else: "not available"}",
-          "- Build tools: #{Enum.join(data.build_tools, ", ")}"
-        ]
+    details =
+      if data.elixir_requirement,
+        do: details ++ ["- Elixir requirement: #{data.elixir_requirement}"],
+        else: details
 
-    sections =
-      if data.elixir_requirement do
-        sections ++ ["- Elixir requirement: #{data.elixir_requirement}"]
-      else
-        sections
-      end
+    deps_section = format_deps_section(data.dependencies)
 
-    deps = data.dependencies
+    (["# #{data.name} v#{data.version}"] ++ retired_banner ++ details ++ deps_section)
+    |> Enum.join("\n")
+  end
 
-    sections =
-      case deps do
-        [] ->
-          sections ++ ["", "## Dependencies", "None"]
+  defp format_retired_banner(nil), do: []
 
-        deps ->
-          dep_lines =
-            Enum.map_join(deps, "\n", fn dep ->
-              optional = if dep.optional, do: " (optional)", else: ""
-              "  - #{dep.name}: #{dep.requirement}#{optional}"
-            end)
+  defp format_retired_banner(retired) do
+    msg = if retired.message, do: ": #{retired.message}", else: ""
+    ["", "> **RETIRED** (#{retired.reason}#{msg})"]
+  end
 
-          sections ++ ["", "## Dependencies (#{length(deps)})", dep_lines]
-      end
+  defp format_deps_section([]), do: ["", "## Dependencies", "None"]
 
-    Enum.join(sections, "\n")
+  defp format_deps_section(deps) do
+    dep_lines =
+      Enum.map_join(deps, "\n", fn dep ->
+        optional = if dep.optional, do: " (optional)", else: ""
+        "  - #{dep.name}: #{dep.requirement}#{optional}"
+      end)
+
+    ["", "## Dependencies (#{length(deps)})", dep_lines]
   end
 
   @doc """
@@ -283,17 +275,17 @@ defmodule HexpmMcp.Formatter do
     count = length(data.dependencies)
     header = "# Dependencies for #{data.name} v#{data.version}\n\nTotal: #{count} dependencies\n"
 
-    if count == 0 do
-      header <> "\nNo dependencies."
-    else
-      deps =
-        Enum.map_join(data.dependencies, "\n", fn dep ->
-          optional = if dep.optional, do: " (optional)", else: ""
-          "- #{dep.name}: #{dep.requirement}#{optional}"
-        end)
-
-      header <> "\n" <> deps
+    case data.dependencies do
+      [] -> header <> "\nNo dependencies."
+      deps -> header <> "\n" <> format_dep_list(deps)
     end
+  end
+
+  defp format_dep_list(deps) do
+    Enum.map_join(deps, "\n", fn dep ->
+      optional = if dep.optional, do: " (optional)", else: ""
+      "- #{dep.name}: #{dep.requirement}#{optional}"
+    end)
   end
 
   @doc """
@@ -481,18 +473,15 @@ defmodule HexpmMcp.Formatter do
       Checked #{audit.total_checked} dependencies. #{audit.total_warnings} warning(s) across #{audit.deps_with_warnings} package(s).
       """
 
-      details =
-        Enum.map_join(audit.results, "\n", fn dep ->
-          if dep.issues == [] do
-            "- **#{dep.name}**: no issues"
-          else
-            "- **#{dep.name}**: #{Enum.join(dep.issues, "; ")}"
-          end
-        end)
-
+      details = Enum.map_join(audit.results, "\n", &format_audit_dep/1)
       header <> "\n" <> details
     end
   end
+
+  defp format_audit_dep(%{name: name, issues: []}), do: "- **#{name}**: no issues"
+
+  defp format_audit_dep(%{name: name, issues: issues}),
+    do: "- **#{name}**: #{Enum.join(issues, "; ")}"
 
   @doc """
   Format alternatives as markdown.
@@ -547,32 +536,26 @@ defmodule HexpmMcp.Formatter do
     header =
       "# Dependency Tree: #{data.name} v#{data.version}\n\nTotal unique dependencies: #{data.total_unique_deps}\n\n"
 
-    entries =
-      Enum.map_join(data.tree, "\n", fn entry ->
-        indent = String.duplicate("  ", entry.depth)
-
-        deps_str =
-          if entry.deps != [] do
-            entry.deps
-            |> Enum.map_join("\n", fn dep ->
-              dep_indent = String.duplicate("  ", dep.depth)
-              optional = if dep.optional, do: " (optional)", else: ""
-              "#{dep_indent}- #{dep.name}: #{dep.requirement}#{optional}"
-            end)
-          else
-            ""
-          end
-
-        pkg_line = "#{indent}**#{entry.name}** v#{entry.version}"
-
-        if deps_str != "" do
-          pkg_line <> "\n" <> deps_str
-        else
-          pkg_line
-        end
-      end)
-
+    entries = Enum.map_join(data.tree, "\n", &format_tree_entry/1)
     header <> entries
+  end
+
+  defp format_tree_entry(entry) do
+    indent = String.duplicate("  ", entry.depth)
+    pkg_line = "#{indent}**#{entry.name}** v#{entry.version}"
+
+    case entry.deps do
+      [] -> pkg_line
+      deps -> pkg_line <> "\n" <> format_tree_deps(deps)
+    end
+  end
+
+  defp format_tree_deps(deps) do
+    Enum.map_join(deps, "\n", fn dep ->
+      indent = String.duplicate("  ", dep.depth)
+      optional = if dep.optional, do: " (optional)", else: ""
+      "#{indent}- #{dep.name}: #{dep.requirement}#{optional}"
+    end)
   end
 
   @doc """

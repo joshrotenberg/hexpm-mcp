@@ -137,34 +137,27 @@ defmodule HexpmMcp do
   """
   @spec get_info(String.t()) :: {:ok, map()} | {:error, error()}
   def get_info(name) do
-    case Client.get_package(name) do
-      {:ok, pkg} ->
-        info = %{
-          name: pkg.name,
-          description: get_in(pkg.meta, ["description"]) || "No description",
-          latest_stable_version: pkg.latest_stable_version,
-          latest_version: pkg.latest_version,
-          downloads: %{
-            all: pkg.downloads["all"] || 0,
-            recent: pkg.downloads["recent"] || 0,
-            week: pkg.downloads["week"] || 0,
-            day: pkg.downloads["day"] || 0
-          },
-          licenses: get_in(pkg.meta, ["licenses"]) || [],
-          build_tools: get_in(pkg.meta, ["build_tools"]) || [],
-          elixir_requirement: get_in(pkg.meta, ["elixir"]),
-          inserted_at: pkg.inserted_at,
-          updated_at: pkg.updated_at,
-          docs_url: pkg.docs_html_url,
-          hex_url: "https://hex.pm/packages/#{pkg.name}",
-          links: get_in(pkg.meta, ["links"]) || %{}
-        }
-
-        {:ok, info}
-
-      error ->
-        error
+    with {:ok, pkg} <- Client.get_package(name) do
+      {:ok, package_to_info(pkg)}
     end
+  end
+
+  defp package_to_info(pkg) do
+    %{
+      name: pkg.name,
+      description: meta(pkg, "description") || "No description",
+      latest_stable_version: pkg.latest_stable_version,
+      latest_version: pkg.latest_version,
+      downloads: extract_downloads(pkg.downloads),
+      licenses: meta(pkg, "licenses") || [],
+      build_tools: meta(pkg, "build_tools") || [],
+      elixir_requirement: meta(pkg, "elixir"),
+      inserted_at: pkg.inserted_at,
+      updated_at: pkg.updated_at,
+      docs_url: pkg.docs_html_url,
+      hex_url: "https://hex.pm/packages/#{pkg.name}",
+      links: meta(pkg, "links") || %{}
+    }
   end
 
   @doc """
@@ -178,19 +171,8 @@ defmodule HexpmMcp do
   """
   @spec get_downloads(String.t()) :: {:ok, map()} | {:error, error()}
   def get_downloads(name) do
-    case Client.get_package(name) do
-      {:ok, pkg} ->
-        {:ok,
-         %{
-           name: pkg.name,
-           all: pkg.downloads["all"] || 0,
-           recent: pkg.downloads["recent"] || 0,
-           week: pkg.downloads["week"] || 0,
-           day: pkg.downloads["day"] || 0
-         }}
-
-      error ->
-        error
+    with {:ok, pkg} <- Client.get_package(name) do
+      {:ok, Map.put(extract_downloads(pkg.downloads), :name, pkg.name)}
     end
   end
 
@@ -331,43 +313,24 @@ defmodule HexpmMcp do
   def get_release(name, version \\ nil) do
     with {:ok, version} <- resolve_version(name, version),
          {:ok, rel} <- Client.get_release(name, version) do
-      build_tools = get_in(rel.meta, ["build_tools"]) || []
-      elixir_req = get_in(rel.meta, ["elixir"])
-      reqs = rel.requirements || %{}
-
-      deps =
-        reqs
-        |> Enum.sort_by(fn {dep_name, _} -> dep_name end)
-        |> Enum.map(fn {dep_name, info} ->
-          %{
-            name: dep_name,
-            requirement: info["requirement"] || "any",
-            optional: info["optional"] || false
-          }
-        end)
-
-      {:ok,
-       %{
-         name: name,
-         version: rel.version,
-         publisher: rel.publisher["username"] || "unknown",
-         inserted_at: rel.inserted_at,
-         updated_at: rel.updated_at,
-         downloads: rel.downloads || 0,
-         has_docs: rel.has_docs || false,
-         build_tools: build_tools,
-         elixir_requirement: elixir_req,
-         dependencies: deps,
-         retired:
-           if(rel.retirement,
-             do: %{
-               reason: rel.retirement["reason"] || "unknown",
-               message: rel.retirement["message"]
-             },
-             else: nil
-           )
-       }}
+      {:ok, release_to_map(name, rel)}
     end
+  end
+
+  defp release_to_map(name, rel) do
+    %{
+      name: name,
+      version: rel.version,
+      publisher: rel.publisher["username"] || "unknown",
+      inserted_at: rel.inserted_at,
+      updated_at: rel.updated_at,
+      downloads: rel.downloads || 0,
+      has_docs: rel.has_docs || false,
+      build_tools: get_in(rel.meta, ["build_tools"]) || [],
+      elixir_requirement: get_in(rel.meta, ["elixir"]),
+      dependencies: parse_requirements(rel.requirements),
+      retired: parse_retirement(rel.retirement)
+    }
   end
 
   @doc """
@@ -393,20 +356,7 @@ defmodule HexpmMcp do
   def get_dependencies(name, version \\ nil) do
     with {:ok, version} <- resolve_version(name, version),
          {:ok, rel} <- Client.get_release(name, version) do
-      reqs = rel.requirements || %{}
-
-      deps =
-        reqs
-        |> Enum.sort_by(fn {dep_name, _} -> dep_name end)
-        |> Enum.map(fn {dep_name, info} ->
-          %{
-            name: dep_name,
-            requirement: info["requirement"] || "any",
-            optional: info["optional"] || false
-          }
-        end)
-
-      {:ok, %{name: name, version: version, dependencies: deps}}
+      {:ok, %{name: name, version: version, dependencies: parse_requirements(rel.requirements)}}
     end
   end
 
@@ -433,23 +383,17 @@ defmodule HexpmMcp do
   def get_features(name, version \\ nil) do
     with {:ok, version} <- resolve_version(name, version),
          {:ok, rel} <- Client.get_release(name, version) do
-      reqs = rel.requirements || %{}
-
       optional_deps =
-        reqs
-        |> Enum.filter(fn {_, info} -> info["optional"] end)
-        |> Enum.map(fn {dep_name, info} ->
-          %{name: dep_name, requirement: info["requirement"] || "any"}
-        end)
-
-      extra_metadata = get_in(rel.meta, ["extra"]) || %{}
+        parse_requirements(rel.requirements)
+        |> Enum.filter(& &1.optional)
+        |> Enum.map(&Map.take(&1, [:name, :requirement]))
 
       {:ok,
        %{
          name: name,
          version: version,
          optional_deps: optional_deps,
-         extra_metadata: extra_metadata
+         extra_metadata: get_in(rel.meta, ["extra"]) || %{}
        }}
     end
   end
@@ -489,47 +433,40 @@ defmodule HexpmMcp do
   end
 
   defp do_compare(names) do
-    results =
+    packages =
       names
-      |> Task.async_stream(
-        fn name ->
-          case Client.get_package(name) do
-            {:ok, pkg} ->
-              version = pkg.latest_stable_version || pkg.latest_version
-
-              dep_count =
-                case Client.get_release(name, version) do
-                  {:ok, rel} -> map_size(rel.requirements || %{})
-                  _ -> 0
-                end
-
-              {name,
-               {:ok,
-                %{
-                  name: pkg.name,
-                  downloads_all: pkg.downloads["all"] || 0,
-                  downloads_recent: pkg.downloads["recent"] || 0,
-                  latest_version: pkg.latest_stable_version || pkg.latest_version || "?",
-                  updated_at: pkg.updated_at,
-                  licenses: (get_in(pkg.meta, ["licenses"]) || []) |> Enum.join(", "),
-                  dep_count: dep_count
-                }}}
-
-            error ->
-              {name, error}
-          end
-        end,
-        timeout: 30_000
-      )
+      |> Task.async_stream(&enrich_for_comparison/1, timeout: 30_000)
       |> Enum.map(fn {:ok, result} -> result end)
 
-    packages =
-      Enum.map(results, fn
-        {_name, {:ok, data}} -> data
-        {name, _error} -> %{name: name, error: true}
-      end)
-
     {:ok, packages}
+  end
+
+  defp enrich_for_comparison(name) do
+    case Client.get_package(name) do
+      {:ok, pkg} ->
+        version = pkg.latest_stable_version || pkg.latest_version
+        dep_count = count_deps(name, version)
+
+        %{
+          name: pkg.name,
+          downloads_all: pkg.downloads["all"] || 0,
+          downloads_recent: pkg.downloads["recent"] || 0,
+          latest_version: pkg.latest_stable_version || pkg.latest_version || "?",
+          updated_at: pkg.updated_at,
+          licenses: (meta(pkg, "licenses") || []) |> Enum.join(", "),
+          dep_count: dep_count
+        }
+
+      _ ->
+        %{name: name, error: true}
+    end
+  end
+
+  defp count_deps(name, version) do
+    case Client.get_release(name, version) do
+      {:ok, rel} -> map_size(rel.requirements || %{})
+      _ -> 0
+    end
   end
 
   @doc """
@@ -577,48 +514,44 @@ defmodule HexpmMcp do
       owners: Task.async(fn -> Client.get_owners(name) end)
     }
 
-    pkg_result = Task.await(tasks.package, 30_000)
-    owners_result = Task.await(tasks.owners, 30_000)
-
-    case pkg_result do
-      {:ok, pkg} ->
-        owners =
-          case owners_result do
-            {:ok, o} -> o
-            _ -> []
-          end
-
-        version = pkg.latest_stable_version || pkg.latest_version
-
-        release =
-          case if(version, do: Client.get_release(name, version), else: {:error, :no_version}) do
-            {:ok, r} -> r
-            _ -> nil
-          end
-
-        now = DateTime.utc_now()
-
-        {:ok,
-         %{
-           name: pkg.name,
-           maintenance: build_maintenance(pkg, now),
-           popularity: %{
-             all: pkg.downloads["all"] || 0,
-             recent: pkg.downloads["recent"] || 0,
-             week: pkg.downloads["week"] || 0
-           },
-           quality: build_quality(pkg, release),
-           risk: %{
-             owner_count: length(owners),
-             retired_count: map_size(pkg.retirements || %{})
-           },
-           links: build_links(pkg)
-         }}
-
-      error ->
-        error
+    with {:ok, pkg} <- Task.await(tasks.package, 30_000) do
+      owners = unwrap_or(Task.await(tasks.owners, 30_000), [])
+      release = fetch_latest_release(pkg)
+      {:ok, build_health_report(pkg, owners, release)}
     end
   end
+
+  defp fetch_latest_release(pkg) do
+    version = pkg.latest_stable_version || pkg.latest_version
+
+    case if(version, do: Client.get_release(pkg.name, version), else: {:error, :no_version}) do
+      {:ok, r} -> r
+      _ -> nil
+    end
+  end
+
+  defp build_health_report(pkg, owners, release) do
+    now = DateTime.utc_now()
+
+    %{
+      name: pkg.name,
+      maintenance: build_maintenance(pkg, now),
+      popularity: %{
+        all: pkg.downloads["all"] || 0,
+        recent: pkg.downloads["recent"] || 0,
+        week: pkg.downloads["week"] || 0
+      },
+      quality: build_quality(pkg, release),
+      risk: %{
+        owner_count: length(owners),
+        retired_count: map_size(pkg.retirements || %{})
+      },
+      links: build_links(pkg)
+    }
+  end
+
+  defp unwrap_or({:ok, value}, _default), do: value
+  defp unwrap_or(_, default), do: default
 
   @doc """
   Audit a package's dependencies for risks.
@@ -653,45 +586,7 @@ defmodule HexpmMcp do
          {:ok, rel} <- Client.get_release(name, version) do
       reqs = rel.requirements || %{}
 
-      if map_size(reqs) == 0 do
-        {:ok,
-         %{
-           name: name,
-           version: version,
-           total_checked: 0,
-           total_warnings: 0,
-           deps_with_warnings: 0,
-           results: []
-         }}
-      else
-        audit_results =
-          reqs
-          |> Map.keys()
-          |> Task.async_stream(fn dep_name -> {dep_name, audit_dep(dep_name)} end,
-            timeout: 30_000
-          )
-          |> Enum.map(fn {:ok, result} -> result end)
-          |> Enum.sort_by(fn {dep_name, _} -> dep_name end)
-
-        total = length(audit_results)
-        with_warnings = Enum.count(audit_results, fn {_, issues} -> issues != [] end)
-        total_warnings = Enum.sum(Enum.map(audit_results, fn {_, issues} -> length(issues) end))
-
-        results =
-          Enum.map(audit_results, fn {dep_name, issues} ->
-            %{name: dep_name, issues: issues}
-          end)
-
-        {:ok,
-         %{
-           name: name,
-           version: version,
-           total_checked: total,
-           total_warnings: total_warnings,
-           deps_with_warnings: with_warnings,
-           results: results
-         }}
-      end
+      {:ok, run_audit(name, version, reqs)}
     end
   end
 
@@ -720,51 +615,51 @@ defmodule HexpmMcp do
   """
   @spec find_alternatives(String.t()) :: {:ok, map()} | {:error, error()}
   def find_alternatives(name) do
-    case Client.get_package(name) do
-      {:ok, pkg} ->
-        keywords = extract_keywords(pkg)
-
-        alternatives =
-          keywords
-          |> Task.async_stream(
-            fn kw ->
-              case Client.search(kw, sort: "recent_downloads") do
-                {:ok, packages} -> packages
-                _ -> []
-              end
-            end,
-            timeout: 30_000
-          )
-          |> Enum.flat_map(fn {:ok, packages} -> packages end)
-          |> Enum.uniq_by(& &1.name)
-          |> Enum.reject(&(&1.name == name))
-          |> Enum.sort_by(fn p -> -(p.downloads["recent"] || 0) end)
-          |> Enum.take(10)
-          |> Enum.map(fn alt ->
-            %{
-              name: alt.name,
-              version: alt.latest_stable_version || alt.latest_version || "?",
-              downloads_all: alt.downloads["all"] || 0,
-              downloads_recent: alt.downloads["recent"] || 0,
-              updated_at: alt.updated_at,
-              status: maintenance_status(alt.updated_at),
-              description: get_in(alt.meta, ["description"]) || "",
-              licenses: (get_in(alt.meta, ["licenses"]) || []) |> Enum.join(", ")
-            }
-          end)
-
-        package = %{
-          name: pkg.name,
-          description: get_in(pkg.meta, ["description"]) || "",
-          downloads_all: pkg.downloads["all"] || 0,
-          downloads_recent: pkg.downloads["recent"] || 0
-        }
-
-        {:ok, %{package: package, alternatives: alternatives}}
-
-      error ->
-        error
+    with {:ok, pkg} <- Client.get_package(name) do
+      alternatives = search_similar(name, extract_keywords(pkg))
+      {:ok, %{package: package_summary(pkg), alternatives: alternatives}}
     end
+  end
+
+  defp search_similar(exclude_name, keywords) do
+    keywords
+    |> Task.async_stream(
+      fn kw ->
+        case Client.search(kw, sort: "recent_downloads") do
+          {:ok, packages} -> packages
+          _ -> []
+        end
+      end,
+      timeout: 30_000
+    )
+    |> Enum.flat_map(fn {:ok, packages} -> packages end)
+    |> Enum.uniq_by(& &1.name)
+    |> Enum.reject(&(&1.name == exclude_name))
+    |> Enum.sort_by(fn p -> -(p.downloads["recent"] || 0) end)
+    |> Enum.take(10)
+    |> Enum.map(&package_to_alternative/1)
+  end
+
+  defp package_to_alternative(pkg) do
+    %{
+      name: pkg.name,
+      version: pkg.latest_stable_version || pkg.latest_version || "?",
+      downloads_all: pkg.downloads["all"] || 0,
+      downloads_recent: pkg.downloads["recent"] || 0,
+      updated_at: pkg.updated_at,
+      status: maintenance_status(pkg.updated_at),
+      description: meta(pkg, "description") || "",
+      licenses: (meta(pkg, "licenses") || []) |> Enum.join(", ")
+    }
+  end
+
+  defp package_summary(pkg) do
+    %{
+      name: pkg.name,
+      description: meta(pkg, "description") || "",
+      downloads_all: pkg.downloads["all"] || 0,
+      downloads_recent: pkg.downloads["recent"] || 0
+    }
   end
 
   @doc """
@@ -901,6 +796,37 @@ defmodule HexpmMcp do
   # Private helpers
   # ---------------------------------------------------------------------------
 
+  defp meta(pkg, key), do: get_in(pkg.meta, [key])
+
+  defp parse_requirements(nil), do: []
+
+  defp parse_requirements(reqs) do
+    reqs
+    |> Enum.sort_by(fn {dep_name, _} -> dep_name end)
+    |> Enum.map(fn {dep_name, info} ->
+      %{
+        name: dep_name,
+        requirement: info["requirement"] || "any",
+        optional: info["optional"] || false
+      }
+    end)
+  end
+
+  defp parse_retirement(nil), do: nil
+
+  defp parse_retirement(retirement) do
+    %{reason: retirement["reason"] || "unknown", message: retirement["message"]}
+  end
+
+  defp extract_downloads(downloads) do
+    %{
+      all: downloads["all"] || 0,
+      recent: downloads["recent"] || 0,
+      week: downloads["week"] || 0,
+      day: downloads["day"] || 0
+    }
+  end
+
   defp resolve_version(_name, version) when is_binary(version), do: {:ok, version}
 
   defp resolve_version(name, nil) do
@@ -997,6 +923,37 @@ defmodule HexpmMcp do
 
     meta_links = get_in(pkg.meta, ["links"]) || %{}
     Map.merge(base, meta_links |> Enum.into(%{}, fn {k, v} -> {k, v} end))
+  end
+
+  defp run_audit(name, version, reqs) when map_size(reqs) == 0 do
+    %{
+      name: name,
+      version: version,
+      total_checked: 0,
+      total_warnings: 0,
+      deps_with_warnings: 0,
+      results: []
+    }
+  end
+
+  defp run_audit(name, version, reqs) do
+    results =
+      reqs
+      |> Map.keys()
+      |> Task.async_stream(fn dep_name -> {dep_name, audit_dep(dep_name)} end, timeout: 30_000)
+      |> Enum.map(fn {:ok, result} -> result end)
+      |> Enum.sort_by(fn {dep_name, _} -> dep_name end)
+
+    total_warnings = Enum.sum(Enum.map(results, fn {_, issues} -> length(issues) end))
+
+    %{
+      name: name,
+      version: version,
+      total_checked: length(results),
+      total_warnings: total_warnings,
+      deps_with_warnings: Enum.count(results, fn {_, issues} -> issues != [] end),
+      results: Enum.map(results, fn {dep_name, issues} -> %{name: dep_name, issues: issues} end)
+    }
   end
 
   defp audit_dep(dep_name) do
