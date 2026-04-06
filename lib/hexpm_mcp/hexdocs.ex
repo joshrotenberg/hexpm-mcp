@@ -227,28 +227,86 @@ defmodule HexpmMcp.HexDocs do
 
   @doc """
   Convert HTML content to a simplified markdown representation.
+
+  Targets the `#content` area of hexdocs pages and strips navigation,
+  search, and footer chrome.
   """
   def html_to_markdown(html) when is_binary(html) do
     case Floki.parse_document(html) do
       {:ok, doc} ->
-        # Try to find the main content area
-        content =
-          case Floki.find(doc, "#content .content-inner, .main-content, article") do
-            [node | _] -> node
-            [] -> doc
-          end
-
-        node_to_markdown(content)
-        |> String.trim()
+        doc
+        |> extract_content()
+        |> strip_chrome()
+        |> node_to_markdown()
+        |> clean_whitespace()
 
       _ ->
-        # If parsing fails, strip tags as fallback
-        html
-        |> String.replace(~r/<[^>]+>/, " ")
-        |> String.replace(~r/\s+/, " ")
-        |> String.trim()
+        strip_tags(html)
     end
   end
+
+  defp extract_content(doc) do
+    case Floki.find(doc, "#content") do
+      [node | _] ->
+        node
+
+      [] ->
+        case Floki.find(doc, "#moduledoc, .content-inner") do
+          [node | _] -> node
+          [] -> doc
+        end
+    end
+  end
+
+  @chrome_selectors [
+    "nav",
+    "#sidebar",
+    "#top-content .heading-with-actions .icon-action",
+    ".search-input",
+    ".autocomplete",
+    "footer",
+    ".hover-link",
+    "#toast",
+    "button#sidebar-menu"
+  ]
+
+  defp strip_chrome(node) do
+    Enum.reduce(@chrome_selectors, node, fn selector, acc ->
+      remove_nodes(acc, selector)
+    end)
+  end
+
+  defp remove_nodes(node, selector) do
+    to_remove = Floki.find([node], selector)
+    Enum.reduce(to_remove, node, fn target, acc -> remove_node(acc, target) end)
+  end
+
+  defp remove_node(nodes, target) when is_list(nodes) do
+    Enum.flat_map(nodes, fn node ->
+      if node == target, do: [], else: [remove_node(node, target)]
+    end)
+  end
+
+  defp remove_node({tag, attrs, children}, target) do
+    {tag, attrs, remove_node(children, target)}
+  end
+
+  defp remove_node(other, _target), do: other
+
+  defp clean_whitespace(text) do
+    text
+    |> String.replace(~r/\n{3,}/, "\n\n")
+    |> String.trim()
+  end
+
+  defp strip_tags(html) do
+    html
+    |> String.replace(~r/<[^>]+>/, " ")
+    |> String.replace(~r/\s+/, " ")
+    |> String.trim()
+  end
+
+  # Node-to-markdown conversion
 
   defp node_to_markdown(nodes) when is_list(nodes) do
     Enum.map_join(nodes, "", &node_to_markdown/1)
@@ -256,67 +314,116 @@ defmodule HexpmMcp.HexDocs do
 
   defp node_to_markdown(text) when is_binary(text), do: text
 
-  defp node_to_markdown({tag, _attrs, children}) when tag in ["h1"] do
-    "\n# #{node_to_markdown(children) |> String.trim()}\n\n"
+  defp node_to_markdown({"h1", _attrs, children}) do
+    "\n# #{children |> node_to_markdown() |> String.trim()}\n\n"
   end
 
-  defp node_to_markdown({tag, _attrs, children}) when tag in ["h2"] do
-    "\n## #{node_to_markdown(children) |> String.trim()}\n\n"
+  defp node_to_markdown({"h2", _attrs, children}) do
+    "\n## #{children |> node_to_markdown() |> String.trim()}\n\n"
   end
 
-  defp node_to_markdown({tag, _attrs, children}) when tag in ["h3"] do
-    "\n### #{node_to_markdown(children) |> String.trim()}\n\n"
+  defp node_to_markdown({"h3", _attrs, children}) do
+    "\n### #{children |> node_to_markdown() |> String.trim()}\n\n"
+  end
+
+  defp node_to_markdown({"h4", _attrs, children}) do
+    "\n#### #{children |> node_to_markdown() |> String.trim()}\n\n"
   end
 
   defp node_to_markdown({"p", _attrs, children}) do
-    "#{node_to_markdown(children) |> String.trim()}\n\n"
+    "#{children |> node_to_markdown() |> String.trim()}\n\n"
   end
 
   defp node_to_markdown({"pre", _attrs, children}) do
-    code = node_to_markdown(children) |> String.trim()
-    "\n```\n#{code}\n```\n\n"
+    lang = extract_code_lang(children)
+    code = children |> node_to_markdown() |> String.trim()
+    "\n```#{lang}\n#{code}\n```\n\n"
   end
 
   defp node_to_markdown({"code", _attrs, children}) do
     "`#{node_to_markdown(children)}`"
   end
 
-  defp node_to_markdown({"strong", _attrs, children}) do
-    "**#{node_to_markdown(children)}**"
-  end
-
-  defp node_to_markdown({"em", _attrs, children}) do
-    "*#{node_to_markdown(children)}*"
-  end
+  defp node_to_markdown({"strong", _attrs, children}), do: "**#{node_to_markdown(children)}**"
+  defp node_to_markdown({"em", _attrs, children}), do: "*#{node_to_markdown(children)}*"
 
   defp node_to_markdown({"a", attrs, children}) do
     href = get_attr(attrs, "href")
     text = node_to_markdown(children)
-    "[#{text}](#{href})"
+    if href == "" or text == "", do: text, else: "[#{text}](#{href})"
   end
 
-  defp node_to_markdown({"ul", _attrs, children}) do
-    node_to_markdown(children) <> "\n"
-  end
-
-  defp node_to_markdown({"ol", _attrs, children}) do
-    node_to_markdown(children) <> "\n"
-  end
+  defp node_to_markdown({"ul", _attrs, children}), do: node_to_markdown(children) <> "\n"
+  defp node_to_markdown({"ol", _attrs, children}), do: node_to_markdown(children) <> "\n"
 
   defp node_to_markdown({"li", _attrs, children}) do
-    "- #{node_to_markdown(children) |> String.trim()}\n"
+    "- #{children |> node_to_markdown() |> String.trim()}\n"
+  end
+
+  # Table support
+  defp node_to_markdown({"table", _attrs, children}) do
+    "\n" <> table_to_markdown(children) <> "\n"
+  end
+
+  defp node_to_markdown({"blockquote", _attrs, children}) do
+    children
+    |> node_to_markdown()
+    |> String.trim()
+    |> String.split("\n")
+    |> Enum.map_join("\n", &"> #{&1}")
+    |> Kernel.<>("\n\n")
   end
 
   defp node_to_markdown({"br", _attrs, _children}), do: "\n"
+  defp node_to_markdown({"hr", _attrs, _children}), do: "\n---\n\n"
 
+  # Skip chrome elements
   defp node_to_markdown({"script", _attrs, _children}), do: ""
   defp node_to_markdown({"style", _attrs, _children}), do: ""
+  defp node_to_markdown({"nav", _attrs, _children}), do: ""
+  defp node_to_markdown({"footer", _attrs, _children}), do: ""
+  defp node_to_markdown({"button", _attrs, _children}), do: ""
+  defp node_to_markdown({"input", _attrs, _children}), do: ""
 
-  defp node_to_markdown({_tag, _attrs, children}) do
-    node_to_markdown(children)
-  end
+  # Section and div -- pass through to children
+  defp node_to_markdown({_tag, _attrs, children}), do: node_to_markdown(children)
 
   defp node_to_markdown(_), do: ""
+
+  # Table conversion helpers
+
+  defp table_to_markdown(nodes) do
+    rows =
+      nodes
+      |> Floki.find("tr")
+      |> Enum.map(fn {"tr", _, cells} ->
+        Enum.map(cells, fn {_tag, _attrs, children} ->
+          children |> node_to_markdown() |> String.trim()
+        end)
+      end)
+
+    case rows do
+      [] -> ""
+      [header | data] -> format_md_table(header, data)
+    end
+  end
+
+  defp format_md_table(header, data) do
+    separator = Enum.map(header, fn _ -> "---" end)
+
+    [header, separator | data]
+    |> Enum.map_join("\n", fn row -> "| " <> Enum.join(row, " | ") <> " |" end)
+    |> Kernel.<>("\n")
+  end
+
+  @known_langs ~w(elixir erlang html shell bash json sql javascript ruby python)
+
+  defp extract_code_lang([{"code", attrs, _} | _]) do
+    class = get_attr(attrs, "class")
+    Enum.find(@known_langs, "", &String.contains?(class, &1))
+  end
+
+  defp extract_code_lang(_), do: ""
 
   # Build a hexdocs URL. When version is nil, omit it (hexdocs serves latest at /pkg/page.html).
   # When version is set, include it: /pkg/version/page.html
