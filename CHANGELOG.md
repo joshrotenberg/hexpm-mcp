@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.2.0...v0.2.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* increase deploy verification timeouts for Fly cold starts ([#42](https://github.com/joshrotenberg/hexpm-mcp/issues/42)) ([9ca0b6e](https://github.com/joshrotenberg/hexpm-mcp/commit/9ca0b6e521df6f95aafa2d3a17e8bab92decc5b1))
+
 ## [0.2.0](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.1.2...v0.2.0) (2026-04-06)
 
 
