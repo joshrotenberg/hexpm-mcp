@@ -596,4 +596,69 @@ defmodule HexpmMcp.Formatter do
 
     header <> entries
   end
+
+  @doc """
+  Format mix deps audit results as markdown.
+  """
+  def format_mix_audit(audit) do
+    if audit.total_checked == 0 do
+      "No dependencies found to audit."
+    else
+      header = """
+      # Mix Dependencies Audit
+
+      Checked #{audit.total_checked} dependencies. #{audit.total_warnings} warning(s) across #{audit.deps_with_warnings} package(s).
+      """
+
+      details = Enum.map_join(audit.results, "\n", &format_mix_audit_dep/1)
+      header <> "\n" <> details
+    end
+  end
+
+  defp format_mix_audit_dep(%{name: name, pinned_version: pinned, issues: []}) do
+    "- **#{name}** (`#{pinned}`): no issues"
+  end
+
+  defp format_mix_audit_dep(%{name: name, pinned_version: pinned, issues: issues}) do
+    "- **#{name}** (`#{pinned}`): #{Enum.join(issues, "; ")}"
+  end
+
+  @doc """
+  Format upgrade check results as markdown.
+  """
+  def format_upgrade_check(data) do
+    if data.total_checked == 0 do
+      "No dependencies found to check."
+    else
+      header = """
+      # Upgrade Check
+
+      Checked #{data.total_checked} dependencies. #{data.upgrades_available} upgrade(s) available.
+      """
+
+      details = Enum.map_join(data.results, "\n", &format_upgrade_dep/1)
+      header <> "\n" <> details
+    end
+  end
+
+  defp format_upgrade_dep(%{status: :up_to_date} = dep) do
+    "- **#{dep.name}** (`#{dep.pinned_version}`): up to date (#{dep.latest_version})"
+  end
+
+  defp format_upgrade_dep(%{status: :error} = dep) do
+    "- **#{dep.name}** (`#{dep.pinned_version}`): could not check"
+  end
+
+  defp format_upgrade_dep(dep) do
+    status_label = status_to_label(dep.status)
+    retired = if dep.retired, do: " [RETIRED]", else: ""
+
+    "- **#{dep.name}** (`#{dep.pinned_version}` -> `#{dep.latest_version}`): #{status_label}#{retired}"
+  end
+
+  defp status_to_label(:major_upgrade), do: "MAJOR upgrade available"
+  defp status_to_label(:minor_upgrade), do: "minor upgrade available"
+  defp status_to_label(:patch_upgrade), do: "patch upgrade available"
+  defp status_to_label(:unknown), do: "upgrade status unknown"
+  defp status_to_label(_), do: "unknown"
 end

@@ -793,6 +793,188 @@ defmodule HexpmMcp do
   def search_docs(name, query, version \\ nil), do: HexDocs.search_docs(name, query, version)
 
   # ---------------------------------------------------------------------------
+  # Mix.exs analysis
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Audit a list of mix.exs dependencies for risks.
+
+  Accepts a deps string (as it appears in mix.exs) and runs a comprehensive
+  audit on each package: staleness, retirement, bus factor, and CVEs via OSV.dev.
+
+  ## Examples
+
+      iex> deps = \"""
+      ...> {:phoenix, "~> 1.7"},
+      ...> {:ecto, "~> 3.10"},
+      ...> {:jason, "~> 1.0"}
+      ...> \"""
+      iex> HexpmMcp.audit_mix_deps(deps)
+      {:ok, %{
+        total_checked: 3,
+        total_warnings: 2,
+        deps_with_warnings: 2,
+        results: [
+          %{name: "ecto", pinned_version: "~> 3.10", issues: []},
+          %{name: "jason", pinned_version: "~> 1.0", issues: ["single maintainer"]},
+          %{name: "phoenix", pinned_version: "~> 1.7", issues: ["3 retired version(s)"]},
+          ...
+        ]
+      }}
+
+  """
+  @spec audit_mix_deps(String.t()) :: {:ok, map()} | {:error, :no_deps_found}
+  def audit_mix_deps(deps_string) do
+    deps = parse_deps_string(deps_string)
+
+    if deps == [] do
+      {:error, :no_deps_found}
+    else
+      results =
+        deps
+        |> Task.async_stream(
+          fn {name, pinned} -> {name, pinned, audit_dep(Atom.to_string(name))} end,
+          timeout: 30_000
+        )
+        |> Enum.map(fn {:ok, result} -> result end)
+        |> Enum.sort_by(fn {name, _, _} -> name end)
+
+      total_warnings = Enum.sum(Enum.map(results, fn {_, _, issues} -> length(issues) end))
+
+      result = %{
+        total_checked: length(results),
+        total_warnings: total_warnings,
+        deps_with_warnings: Enum.count(results, fn {_, _, issues} -> issues != [] end),
+        results:
+          Enum.map(results, fn {name, pinned, issues} ->
+            %{name: Atom.to_string(name), pinned_version: pinned, issues: issues}
+          end)
+      }
+
+      {:ok, result}
+    end
+  end
+
+  @doc """
+  Check which mix.exs dependencies have newer versions available.
+
+  Accepts a deps string and checks each against the latest version on hex.pm.
+  Flags major version bumps as potentially breaking.
+
+  ## Examples
+
+      iex> deps = \"""
+      ...> {:phoenix, "~> 1.7"},
+      ...> {:jason, "~> 1.0"}
+      ...> \"""
+      iex> HexpmMcp.upgrade_check(deps)
+      {:ok, %{
+        total_checked: 2,
+        upgrades_available: 1,
+        results: [
+          %{name: "jason", pinned_version: "~> 1.0", latest_version: "1.4.4",
+            status: :up_to_date},
+          %{name: "phoenix", pinned_version: "~> 1.7", latest_version: "1.8.5",
+            status: :minor_upgrade, retired: false}
+        ]
+      }}
+
+  """
+  @spec upgrade_check(String.t()) :: {:ok, map()} | {:error, :no_deps_found}
+  def upgrade_check(deps_string) do
+    deps = parse_deps_string(deps_string)
+
+    if deps == [] do
+      {:error, :no_deps_found}
+    else
+      results =
+        deps
+        |> Task.async_stream(&check_upgrade/1, timeout: 30_000)
+        |> Enum.map(fn {:ok, result} -> result end)
+        |> Enum.sort_by(& &1.name)
+
+      upgrades = Enum.count(results, &(&1.status != :up_to_date and &1.status != :error))
+
+      {:ok, %{total_checked: length(results), upgrades_available: upgrades, results: results}}
+    end
+  end
+
+  defp check_upgrade({name, pinned}) do
+    name_str = Atom.to_string(name)
+
+    case Client.get_package(name_str) do
+      {:ok, pkg} ->
+        latest = pkg.latest_stable_version || pkg.latest_version
+        retired = Map.has_key?(pkg.retirements || %{}, latest)
+        status = classify_upgrade(pinned, latest)
+
+        %{
+          name: name_str,
+          pinned_version: pinned,
+          latest_version: latest,
+          status: status,
+          retired: retired
+        }
+
+      {:error, _} ->
+        %{
+          name: name_str,
+          pinned_version: pinned,
+          latest_version: nil,
+          status: :error,
+          retired: false
+        }
+    end
+  end
+
+  defp classify_upgrade(pinned, latest) when is_binary(pinned) and is_binary(latest) do
+    case extract_base_version(pinned) do
+      nil ->
+        :unknown
+
+      base ->
+        case {Version.parse(base), Version.parse(latest)} do
+          {{:ok, pinned_v}, {:ok, latest_v}} -> compare_versions(pinned_v, latest_v)
+          _ -> :unknown
+        end
+    end
+  end
+
+  defp classify_upgrade(_, _), do: :unknown
+
+  defp extract_base_version(requirement) do
+    case Regex.run(~r/(\d+\.\d+[\.\d]*)/, requirement) do
+      [_, version] ->
+        # Ensure it has 3 parts for Version.parse
+        case String.split(version, ".") do
+          [maj, min] -> "#{maj}.#{min}.0"
+          [_, _, _] -> version
+          _ -> nil
+        end
+
+      _ ->
+        nil
+    end
+  end
+
+  defp compare_versions(pinned, latest) do
+    cond do
+      latest.major > pinned.major -> :major_upgrade
+      latest.minor > pinned.minor -> :minor_upgrade
+      latest.patch > pinned.patch -> :patch_upgrade
+      true -> :up_to_date
+    end
+  end
+
+  @doc false
+  def parse_deps_string(deps_string) do
+    ~r/\{:(\w+),\s*"([^"]+)"/
+    |> Regex.scan(deps_string)
+    |> Enum.map(fn [_, name, version] -> {String.to_atom(name), version} end)
+    |> Enum.uniq_by(fn {name, _} -> name end)
+  end
+
+  # ---------------------------------------------------------------------------
   # Private helpers
   # ---------------------------------------------------------------------------
 
