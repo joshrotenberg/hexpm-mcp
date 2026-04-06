@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.1.2...v0.2.0) (2026-04-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove reverse_dependencies tool (endpoint doesn't exist) ([#40](https://github.com/joshrotenberg/hexpm-mcp/issues/40))
+
+### Bug Fixes
+
+* remove reverse_dependencies tool (endpoint doesn't exist) ([#40](https://github.com/joshrotenberg/hexpm-mcp/issues/40)) ([9bf121a](https://github.com/joshrotenberg/hexpm-mcp/commit/9bf121ade5865e5e2f76589a422b881faaae1fef)), closes [#39](https://github.com/joshrotenberg/hexpm-mcp/issues/39)
+
 ## [0.1.2](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.1.1...v0.1.2) (2026-04-06)
 
 
