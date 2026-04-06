@@ -67,23 +67,6 @@ defmodule HexpmMcp.Client do
   end
 
   @doc """
-  Get reverse dependencies for a package.
-  """
-  def get_reverse_dependencies(name, opts \\ []) do
-    params = maybe_put([], :page, opts[:page])
-
-    Cache.fetch({:reverse_deps, name, opts}, fn ->
-      case get("/packages/#{name}/reverse_dependencies", params: params) do
-        {:ok, data} when is_list(data) ->
-          {:ok, Enum.map(data, &Types.parse_package/1)}
-
-        error ->
-          error
-      end
-    end)
-  end
-
-  @doc """
   Make a GET request to the hex.pm API.
   """
   def get(path, opts \\ []) do
