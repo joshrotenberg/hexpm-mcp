@@ -1,7 +1,7 @@
 # hexpm-mcp
 
 [![CI](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml)
-[![Deploy](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/deploy.yml/badge.svg)](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/deploy.yml)
+[![Hex.pm](https://img.shields.io/hexpm/v/hexpm_mcp.svg)](https://hex.pm/packages/hexpm_mcp)
 ![Elixir](https://img.shields.io/badge/Elixir-1.17%2B-blueviolet)
 ![OTP](https://img.shields.io/badge/OTP-28-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
