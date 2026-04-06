@@ -5,7 +5,6 @@ defmodule HexpmMcp.MCP.Tools.UpgradeCheck do
 
   use Anubis.Server.Component, type: :tool
 
-  alias Anubis.MCP.Error
   alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
@@ -25,9 +24,6 @@ defmodule HexpmMcp.MCP.Tools.UpgradeCheck do
       {:error, :no_deps_found} ->
         {:reply, Response.text(Response.tool(), "No dependencies found in the provided text."),
          frame}
-
-      {:error, reason} ->
-        {:error, Error.execution("Upgrade check failed: #{inspect(reason)}"), frame}
     end
   end
 end
