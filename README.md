@@ -2,33 +2,17 @@
 
 [![CI](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml)
 [![Deploy](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/deploy.yml/badge.svg)](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/deploy.yml)
+![Elixir](https://img.shields.io/badge/Elixir-1.17%2B-blueviolet)
+![OTP](https://img.shields.io/badge/OTP-28-blue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 MCP server for querying [hex.pm](https://hex.pm) and [hexdocs.pm](https://hexdocs.pm) -- the Elixir/Erlang package registry and documentation hosting.
 
 Built with [Anubis MCP](https://hex.pm/packages/anubis_mcp) + [Bandit](https://hex.pm/packages/bandit) in Elixir.
 
-## Deployed Instance
+## Quick Start
 
-A public instance is running on Fly.io and available for any MCP client:
-
-```
-https://hexpm-mcp.fly.dev/mcp
-```
-
-Add to Claude Desktop `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "hexpm": {
-      "type": "http",
-      "url": "https://hexpm-mcp.fly.dev/mcp"
-    }
-  }
-}
-```
-
-Or in a project `.mcp.json` for Claude Code:
+A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your MCP client config (Claude Desktop, Claude Code, or any MCP client):
 
 ```json
 {
@@ -150,9 +134,9 @@ Checked 10 dependencies. 8 warning(s) across 7 package(s).
 
 ## Usage
 
-### Claude Code (stdio, local)
+### Local (stdio)
 
-For local development, run from source:
+To run from source with stdio transport (e.g. for development):
 
 ```json
 {
