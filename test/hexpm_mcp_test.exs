@@ -419,4 +419,94 @@ defmodule HexpmMcpTest do
       assert audit.results == []
     end
   end
+
+  describe "parse_deps_string/1" do
+    test "parses typical mix.exs deps" do
+      deps = """
+      {:phoenix, "~> 1.7"},
+      {:ecto, "~> 3.10", only: :dev},
+      {:jason, "~> 1.0"}
+      """
+
+      result = HexpmMcp.parse_deps_string(deps)
+      assert length(result) == 3
+      assert {:phoenix, "~> 1.7"} in result
+      assert {:ecto, "~> 3.10"} in result
+      assert {:jason, "~> 1.0"} in result
+    end
+
+    test "handles exact versions" do
+      deps = ~s({:plug, "1.15.0"})
+      result = HexpmMcp.parse_deps_string(deps)
+      assert [{:plug, "1.15.0"}] = result
+    end
+
+    test "deduplicates" do
+      deps = """
+      {:jason, "~> 1.0"},
+      {:jason, "~> 1.0"}
+      """
+
+      result = HexpmMcp.parse_deps_string(deps)
+      assert length(result) == 1
+    end
+
+    test "returns empty list for no matches" do
+      assert [] = HexpmMcp.parse_deps_string("no deps here")
+    end
+  end
+
+  describe "audit_mix_deps/1" do
+    test "audits parsed deps", %{bypass: bypass} do
+      Bypass.stub(bypass, "GET", "/packages/jason", fn conn ->
+        respond_json(conn, 200, package_json("jason"))
+      end)
+
+      Bypass.stub(bypass, "GET", "/packages/jason/owners", fn conn ->
+        respond_json(conn, 200, [owner_json("michalmuskala")])
+      end)
+
+      deps = ~s({:jason, "~> 1.0"})
+      assert {:ok, audit} = HexpmMcp.audit_mix_deps(deps)
+      assert audit.total_checked == 1
+      assert hd(audit.results).name == "jason"
+      assert hd(audit.results).pinned_version == "~> 1.0"
+    end
+
+    test "returns error for empty deps" do
+      assert {:error, :no_deps_found} = HexpmMcp.audit_mix_deps("nothing here")
+    end
+  end
+
+  describe "upgrade_check/1" do
+    test "checks for available upgrades", %{bypass: bypass} do
+      Bypass.stub(bypass, "GET", "/packages/plug", fn conn ->
+        respond_json(conn, 200, package_json("plug", stable_version: "1.19.1"))
+      end)
+
+      deps = ~s({:plug, "~> 1.15"})
+      assert {:ok, data} = HexpmMcp.upgrade_check(deps)
+      assert data.total_checked == 1
+
+      result = hd(data.results)
+      assert result.name == "plug"
+      assert result.pinned_version == "~> 1.15"
+      assert result.latest_version == "1.19.1"
+      assert result.status == :minor_upgrade
+    end
+
+    test "detects up-to-date deps", %{bypass: bypass} do
+      Bypass.stub(bypass, "GET", "/packages/jason", fn conn ->
+        respond_json(conn, 200, package_json("jason", stable_version: "1.0.0"))
+      end)
+
+      deps = ~s({:jason, "~> 1.0"})
+      assert {:ok, data} = HexpmMcp.upgrade_check(deps)
+      assert hd(data.results).status == :up_to_date
+    end
+
+    test "returns error for empty deps" do
+      assert {:error, :no_deps_found} = HexpmMcp.upgrade_check("nothing here")
+    end
+  end
 end

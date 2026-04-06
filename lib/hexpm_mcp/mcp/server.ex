@@ -31,6 +31,10 @@ defmodule HexpmMcp.MCP.Server do
   component(HexpmMcp.MCP.Tools.Alternatives)
   component(HexpmMcp.MCP.Tools.DepTree)
 
+  # Mix.exs analysis tools
+  component(HexpmMcp.MCP.Tools.AuditMixDeps)
+  component(HexpmMcp.MCP.Tools.UpgradeCheck)
+
   # Resources
   component(HexpmMcp.MCP.Resources.PackageInfo)
   component(HexpmMcp.MCP.Resources.PackageReadme)
