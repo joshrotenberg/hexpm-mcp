@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.1.1...v0.1.2) (2026-04-06)
+
+
+### Bug Fixes
+
+* chain deploy from release-please, add hex.pm badge ([#37](https://github.com/joshrotenberg/hexpm-mcp/issues/37)) ([5d82574](https://github.com/joshrotenberg/hexpm-mcp/commit/5d8257482d8a3023eee68e3f57428d31bcda2c72))
+
 ## [0.1.1](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.1.0...v0.1.1) (2026-04-06)
 
 
