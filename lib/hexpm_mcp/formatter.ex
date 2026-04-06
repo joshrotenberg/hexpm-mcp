@@ -289,25 +289,6 @@ defmodule HexpmMcp.Formatter do
   end
 
   @doc """
-  Format reverse dependencies as markdown.
-  """
-  def format_reverse_dependencies(data) do
-    header =
-      "# Packages depending on #{data.name}\n\nFound #{length(data.dependents)} dependents:\n\n"
-
-    if data.dependents == [] do
-      header <> "No packages depend on #{data.name}."
-    else
-      entries =
-        Enum.map_join(data.dependents, "\n", fn dep ->
-          "- **#{dep.name}** (#{format_number(dep.downloads)} downloads) #{dep.description}"
-        end)
-
-      header <> entries
-    end
-  end
-
-  @doc """
   Format download statistics as markdown.
   """
   def format_downloads(data) do

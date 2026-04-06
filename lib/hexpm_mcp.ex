@@ -26,8 +26,7 @@ defmodule HexpmMcp do
   ## Function Groups
 
   ### Simple lookups
-  `search/2`, `get_info/1`, `get_downloads/1`, `get_owners/1`, `get_versions/1`,
-  `get_reverse_dependencies/1`
+  `search/2`, `get_info/1`, `get_downloads/1`, `get_owners/1`, `get_versions/1`
 
   ### Version-resolving lookups
   `get_release/2`, `get_dependencies/2`, `get_features/2` -- pass `nil` for version
@@ -237,43 +236,6 @@ defmodule HexpmMcp do
           end)
 
         {:ok, %{name: pkg.name, versions: versions}}
-
-      error ->
-        error
-    end
-  end
-
-  @doc """
-  Find packages that depend on a given hex.pm package.
-
-  ## Examples
-
-      iex> HexpmMcp.get_reverse_dependencies("jason")
-      {:ok, %{name: "jason", dependents: [
-        %{name: "phoenix", downloads: 148_000_000, description: "Peace of mind from prototype to production"},
-        %{name: "ecto", downloads: 95_000_000, description: "A toolkit for data mapping..."},
-        ...
-      ]}}
-
-  """
-  @spec get_reverse_dependencies(String.t()) :: {:ok, map()} | {:error, error()}
-  def get_reverse_dependencies(name) do
-    case Client.get_reverse_dependencies(name) do
-      {:ok, packages} ->
-        dependents =
-          Enum.map(packages, fn pkg ->
-            %{
-              name: pkg.name,
-              downloads: pkg.downloads["all"] || 0,
-              description:
-                case get_in(pkg.meta, ["description"]) || "" do
-                  "" -> ""
-                  desc -> desc |> String.split("\n", parts: 2) |> hd()
-                end
-            }
-          end)
-
-        {:ok, %{name: name, dependents: dependents}}
 
       error ->
         error

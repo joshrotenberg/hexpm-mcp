@@ -19,7 +19,6 @@ defmodule HexpmMcp.MCP.Server do
   component(HexpmMcp.MCP.Tools.Release)
   component(HexpmMcp.MCP.Tools.Features)
   component(HexpmMcp.MCP.Tools.Dependencies)
-  component(HexpmMcp.MCP.Tools.Reverse)
   component(HexpmMcp.MCP.Tools.Downloads)
   component(HexpmMcp.MCP.Tools.Owners)
   component(HexpmMcp.MCP.Tools.Readme)
