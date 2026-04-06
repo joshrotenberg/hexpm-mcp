@@ -143,22 +143,6 @@ defmodule HexpmMcpTest do
     end
   end
 
-  describe "get_reverse_dependencies/1" do
-    test "returns dependents", %{bypass: bypass} do
-      Bypass.expect_once(bypass, "GET", "/packages/jason/reverse_dependencies", fn conn ->
-        respond_json(conn, 200, [
-          package_json("phoenix", description: "Web framework"),
-          package_json("ecto", description: "Database toolkit")
-        ])
-      end)
-
-      assert {:ok, data} = HexpmMcp.get_reverse_dependencies("jason")
-      assert data.name == "jason"
-      assert length(data.dependents) == 2
-      assert hd(data.dependents).name == "phoenix"
-    end
-  end
-
   describe "get_release/2" do
     test "returns release details with explicit version", %{bypass: bypass} do
       Bypass.expect_once(bypass, "GET", "/packages/plug/releases/1.15.0", fn conn ->

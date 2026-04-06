@@ -27,7 +27,7 @@ A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your 
 
 ## Features
 
-- 17 tools for searching, inspecting, comparing, and auditing hex.pm packages
+- 16 tools for searching, inspecting, comparing, and auditing hex.pm packages
 - 3 URI-template resources for structured package data access
 - 5 guided analysis prompts
 - HexDocs browsing (module listing, doc search, full module docs)
@@ -48,7 +48,6 @@ A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your 
 | `release` | Release details, publisher, dependencies, build tools |
 | `features` | Optional dependencies and extra metadata |
 | `dependencies` | Dependency list for a version |
-| `reverse` | Packages that depend on a given package |
 | `downloads` | Download statistics (all-time, recent, weekly, daily) |
 | `owners` | Package maintainers |
 | `readme` | README content as markdown |
@@ -189,7 +188,7 @@ iex> HexpmMcp.audit_mix_deps(~s({:phoenix, "~> 1.7"}, {:jason, "~> 1.0"}))
 
 ## API Reference
 
-All 21 functions return `{:ok, structured_map}` or `{:error, reason}`.
+All 20 functions return `{:ok, structured_map}` or `{:error, reason}`.
 
 ```elixir
 # Search and lookup
@@ -198,7 +197,6 @@ HexpmMcp.get_info(name)
 HexpmMcp.get_downloads(name)
 HexpmMcp.get_owners(name)
 HexpmMcp.get_versions(name)
-HexpmMcp.get_reverse_dependencies(name)
 
 # Version-specific (pass nil for latest)
 HexpmMcp.get_release(name, version \\ nil)
@@ -235,7 +233,7 @@ iex / Elixir code                 MCP clients
    (internal, HTTP clients)      then Response.text()
 ```
 
-- **`HexpmMcp`** -- 21 public functions returning structured maps, usable from iex
+- **`HexpmMcp`** -- 20 public functions returning structured maps, usable from iex
 - **`HexpmMcp.Formatter`** -- markdown formatting for MCP tool output
 - **`HexpmMcp.Client`** -- Req-based hex.pm API client with rate limiting
 - **`HexpmMcp.HexDocs`** -- hexdocs.pm browsing (sidebar data parsing, HTML-to-markdown)
