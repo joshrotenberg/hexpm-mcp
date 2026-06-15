@@ -1,7 +1,6 @@
 # hexpm-mcp
 
 [![CI](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml)
-[![Hex.pm](https://img.shields.io/hexpm/v/hexpm_mcp.svg)](https://hex.pm/packages/hexpm_mcp)
 ![Elixir](https://img.shields.io/badge/Elixir-1.17%2B-blueviolet)
 ![OTP](https://img.shields.io/badge/OTP-28-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -27,7 +26,7 @@ A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your 
 
 ## Features
 
-- 16 tools for searching, inspecting, comparing, and auditing hex.pm packages
+- 19 tools for searching, inspecting, comparing, and auditing hex.pm packages
 - 3 URI-template resources for structured package data access
 - 5 guided analysis prompts
 - HexDocs browsing (module listing, doc search, full module docs)

@@ -34,7 +34,7 @@ defmodule HexpmMcp.MixProject do
     [
       {:anubis_mcp, "~> 1.0"},
       {:bandit, "~> 1.0"},
-      {:req, "~> 0.5"},
+      {:req, "~> 0.6"},
       {:floki, "~> 0.37"},
       {:jason, "~> 1.4"},
       {:bypass, "~> 2.1", only: :test},

@@ -795,7 +795,7 @@ defmodule HexpmMcp do
       results =
         deps
         |> Task.async_stream(
-          fn {name, pinned} -> {name, pinned, audit_dep(Atom.to_string(name))} end,
+          fn {name, pinned} -> {name, pinned, audit_dep(name)} end,
           timeout: 30_000
         )
         |> Enum.map(fn {:ok, result} -> result end)
@@ -809,7 +809,7 @@ defmodule HexpmMcp do
         deps_with_warnings: Enum.count(results, fn {_, _, issues} -> issues != [] end),
         results:
           Enum.map(results, fn {name, pinned, issues} ->
-            %{name: Atom.to_string(name), pinned_version: pinned, issues: issues}
+            %{name: name, pinned_version: pinned, issues: issues}
           end)
       }
 
@@ -862,16 +862,14 @@ defmodule HexpmMcp do
   end
 
   defp check_upgrade({name, pinned}) do
-    name_str = Atom.to_string(name)
-
-    case Client.get_package(name_str) do
+    case Client.get_package(name) do
       {:ok, pkg} ->
         latest = pkg.latest_stable_version || pkg.latest_version
         retired = Map.has_key?(pkg.retirements || %{}, latest)
         status = classify_upgrade(pinned, latest)
 
         %{
-          name: name_str,
+          name: name,
           pinned_version: pinned,
           latest_version: latest,
           status: status,
@@ -880,7 +878,7 @@ defmodule HexpmMcp do
 
       {:error, _} ->
         %{
-          name: name_str,
+          name: name,
           pinned_version: pinned,
           latest_version: nil,
           status: :error,
@@ -930,9 +928,11 @@ defmodule HexpmMcp do
 
   @doc false
   def parse_deps_string(deps_string) do
+    # Keep names as strings: they are only used as package names for lookups,
+    # and String.to_atom on unbounded user input would exhaust the atom table.
     ~r/\{:(\w+),\s*"([^"]+)"/
     |> Regex.scan(deps_string)
-    |> Enum.map(fn [_, name, version] -> {String.to_atom(name), version} end)
+    |> Enum.map(fn [_, name, version] -> {name, version} end)
     |> Enum.uniq_by(fn {name, _} -> name end)
   end
 

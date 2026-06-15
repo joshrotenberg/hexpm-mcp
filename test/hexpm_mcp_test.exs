@@ -418,15 +418,20 @@ defmodule HexpmMcpTest do
 
       result = HexpmMcp.parse_deps_string(deps)
       assert length(result) == 3
-      assert {:phoenix, "~> 1.7"} in result
-      assert {:ecto, "~> 3.10"} in result
-      assert {:jason, "~> 1.0"} in result
+      assert {"phoenix", "~> 1.7"} in result
+      assert {"ecto", "~> 3.10"} in result
+      assert {"jason", "~> 1.0"} in result
     end
 
     test "handles exact versions" do
       deps = ~s({:plug, "1.15.0"})
       result = HexpmMcp.parse_deps_string(deps)
-      assert [{:plug, "1.15.0"}] = result
+      assert [{"plug", "1.15.0"}] = result
+    end
+
+    test "returns string names, not atoms (avoids atom-table exhaustion)" do
+      assert [{name, "1.0.0"}] = HexpmMcp.parse_deps_string(~s({:some_pkg, "1.0.0"}))
+      assert is_binary(name)
     end
 
     test "deduplicates" do
