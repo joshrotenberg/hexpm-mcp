@@ -246,7 +246,12 @@ defmodule HexpmMcp.FormatterTest do
     end
 
     test "formats owners with and without email" do
-      out = Formatter.format_owners("plug", [%{username: "jose", email: "j@x.com"}, %{username: "eric", email: nil}])
+      out =
+        Formatter.format_owners("plug", [
+          %{username: "jose", email: "j@x.com"},
+          %{username: "eric", email: nil}
+        ])
+
       assert out =~ "# Owners of plug"
       assert out =~ "- jose (j@x.com)"
       assert out =~ "- eric"
@@ -280,7 +285,12 @@ defmodule HexpmMcp.FormatterTest do
     test "formats all sections with single-maintainer warning" do
       health = %{
         name: "req",
-        maintenance: %{age: "4 years ago", total_versions: 52, status: "Active", days_since_release: 30},
+        maintenance: %{
+          age: "4 years ago",
+          total_versions: 52,
+          status: "Active",
+          days_since_release: 30
+        },
         popularity: %{all: 11_500_000, recent: 1_600_000, week: 141_000},
         quality: %{
           has_docs: true,
@@ -327,7 +337,15 @@ defmodule HexpmMcp.FormatterTest do
     end
 
     test "handles no dependencies" do
-      audit = %{name: "x", version: "1.0.0", total_checked: 0, total_warnings: 0, deps_with_warnings: 0, results: []}
+      audit = %{
+        name: "x",
+        version: "1.0.0",
+        total_checked: 0,
+        total_warnings: 0,
+        deps_with_warnings: 0,
+        results: []
+      }
+
       assert Formatter.format_audit(audit) =~ "no dependencies to audit"
     end
   end
@@ -335,7 +353,12 @@ defmodule HexpmMcp.FormatterTest do
   describe "format_alternatives/1" do
     test "formats alternatives with comparison table" do
       data = %{
-        package: %{name: "poison", description: "JSON", downloads_all: 50_000_000, downloads_recent: 500_000},
+        package: %{
+          name: "poison",
+          description: "JSON",
+          downloads_all: 50_000_000,
+          downloads_recent: 500_000
+        },
         alternatives: [
           %{
             name: "jason",
@@ -358,7 +381,11 @@ defmodule HexpmMcp.FormatterTest do
     end
 
     test "handles no alternatives" do
-      data = %{package: %{name: "x", description: "d", downloads_all: 0, downloads_recent: 0}, alternatives: []}
+      data = %{
+        package: %{name: "x", description: "d", downloads_all: 0, downloads_recent: 0},
+        alternatives: []
+      }
+
       assert Formatter.format_alternatives(data) =~ "No alternative packages found."
     end
   end
@@ -442,10 +469,34 @@ defmodule HexpmMcp.FormatterTest do
         total_checked: 4,
         upgrades_available: 2,
         results: [
-          %{name: "jason", pinned_version: "~> 1.0", latest_version: "1.0.0", status: :up_to_date, retired: false},
-          %{name: "plug", pinned_version: "~> 1.14", latest_version: "1.19.1", status: :minor_upgrade, retired: false},
-          %{name: "ecto", pinned_version: "~> 2.0", latest_version: "3.0.0", status: :major_upgrade, retired: true},
-          %{name: "gone", pinned_version: "~> 1.0", latest_version: nil, status: :error, retired: false}
+          %{
+            name: "jason",
+            pinned_version: "~> 1.0",
+            latest_version: "1.0.0",
+            status: :up_to_date,
+            retired: false
+          },
+          %{
+            name: "plug",
+            pinned_version: "~> 1.14",
+            latest_version: "1.19.1",
+            status: :minor_upgrade,
+            retired: false
+          },
+          %{
+            name: "ecto",
+            pinned_version: "~> 2.0",
+            latest_version: "3.0.0",
+            status: :major_upgrade,
+            retired: true
+          },
+          %{
+            name: "gone",
+            pinned_version: "~> 1.0",
+            latest_version: nil,
+            status: :error,
+            retired: false
+          }
         ]
       }
 
