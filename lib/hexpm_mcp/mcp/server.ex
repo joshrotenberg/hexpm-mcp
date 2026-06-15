@@ -34,6 +34,11 @@ defmodule HexpmMcp.MCP.Server do
   component(HexpmMcp.MCP.Tools.AuditMixDeps)
   component(HexpmMcp.MCP.Tools.UpgradeCheck)
 
+  # HexDocs browsing tools
+  component(HexpmMcp.MCP.Tools.Docs)
+  component(HexpmMcp.MCP.Tools.SearchDocs)
+  component(HexpmMcp.MCP.Tools.DocItem)
+
   # Resources
   component(HexpmMcp.MCP.Resources.PackageInfo)
   component(HexpmMcp.MCP.Resources.PackageReadme)
