@@ -11,3 +11,11 @@ hexpm_mcp-*.tar
 .elixir_ls/
 CLAUDE.md
 books.json
+
+# macOS
+.DS_Store
+
+# Node (not used by this project; ignore accidental drops from tooling)
+/node_modules/
+/package.json
+/package-lock.json
