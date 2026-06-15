@@ -10,13 +10,7 @@ defmodule HexpmMcp.MixProject do
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       releases: releases(),
-      test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.detail": :test,
-        "coveralls.html": :test,
-        "coveralls.json": :test
-      ]
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -24,6 +18,17 @@ defmodule HexpmMcp.MixProject do
     [
       extra_applications: [:logger],
       mod: {HexpmMcp.Application, []}
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.html": :test,
+        "coveralls.json": :test
+      ]
     ]
   end
 
