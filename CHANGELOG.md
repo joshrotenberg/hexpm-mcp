@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.1](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.0...v0.3.1) (2026-06-15)
+
+
+### Features
+
+* expose the three hexdocs browsing tools ([#46](https://github.com/joshrotenberg/hexpm-mcp/issues/46)) ([0026ac9](https://github.com/joshrotenberg/hexpm-mcp/commit/0026ac93c82f11dafc6ab8ad83de7baa70326232))
+* hex.pm packaging — metadata, LICENSE, and ex_doc ([#49](https://github.com/joshrotenberg/hexpm-mcp/issues/49)) ([4870de3](https://github.com/joshrotenberg/hexpm-mcp/commit/4870de3731a1dc6e70302c02b03d9759573543f2))
+
+
+### Bug Fixes
+
+* avoid atom exhaustion in mix deps parsing ([#51](https://github.com/joshrotenberg/hexpm-mcp/issues/51)) ([7706b20](https://github.com/joshrotenberg/hexpm-mcp/commit/7706b207b8a5a9d57dac04b2ab2096c6e46045e3))
+* derive server version from mix and de-flake health test ([#45](https://github.com/joshrotenberg/hexpm-mcp/issues/45)) ([c0061a3](https://github.com/joshrotenberg/hexpm-mcp/commit/c0061a37a00ca8b48775f09d8f3abe773ce38980))
+
 ## [0.3.0](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.2.1...v0.3.0) (2026-04-06)
 
 
