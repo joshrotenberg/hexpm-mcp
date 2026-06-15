@@ -1,6 +1,8 @@
 defmodule HexpmMcp.MixProject do
   use Mix.Project
 
+  @source_url "https://github.com/joshrotenberg/hexpm-mcp"
+
   def project do
     [
       app: :hexpm_mcp,
@@ -9,7 +11,10 @@ defmodule HexpmMcp.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      releases: releases()
+      releases: releases(),
+      description: description(),
+      package: package(),
+      source_url: @source_url
     ]
   end
 
@@ -22,6 +27,20 @@ defmodule HexpmMcp.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp description do
+    "MCP server for hex.pm and hexdocs.pm: search, inspect, compare, and audit " <>
+      "Elixir/Erlang packages, browse docs, and check dependencies for vulnerabilities."
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      links: %{"GitHub" => @source_url},
+      maintainers: ["Josh Rotenberg"],
+      files: ~w(lib mix.exs README.md LICENSE .formatter.exs)
+    ]
+  end
 
   defp deps do
     [
