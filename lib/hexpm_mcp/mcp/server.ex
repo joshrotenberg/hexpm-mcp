@@ -3,9 +3,13 @@ defmodule HexpmMcp.MCP.Server do
   Anubis MCP server definition for hexpm-mcp.
   """
 
+  # Keep the advertised server version in lockstep with mix.exs. Resolved at
+  # compile time and baked in as a literal, so there is no runtime Mix dependency.
+  @version Mix.Project.config()[:version]
+
   use Anubis.Server,
     name: "hexpm-mcp",
-    version: "0.1.0",
+    version: @version,
     capabilities: [
       :tools,
       :resources,
