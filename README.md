@@ -27,7 +27,7 @@ A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your 
 
 ## Features
 
-- 16 tools for searching, inspecting, comparing, and auditing hex.pm packages
+- 19 tools for searching, inspecting, comparing, and auditing hex.pm packages
 - 3 URI-template resources for structured package data access
 - 5 guided analysis prompts
 - HexDocs browsing (module listing, doc search, full module docs)
