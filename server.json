@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.joshrotenberg/hexpm-mcp",
   "title": "Hex.pm MCP",
-  "description": "MCP server for hex.pm and hexdocs.pm: search, inspect, compare, and audit Elixir/Erlang packages, browse docs, and check dependencies for vulnerabilities.",
-  "version": "0.3.0",
+  "description": "MCP server for hex.pm and hexdocs.pm: search, inspect, compare, and audit Elixir packages",
+  "version": "0.3.1",
   "websiteUrl": "https://github.com/joshrotenberg/hexpm-mcp",
   "repository": {
     "url": "https://github.com/joshrotenberg/hexpm-mcp",
