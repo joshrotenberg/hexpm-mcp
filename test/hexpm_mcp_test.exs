@@ -305,6 +305,10 @@ defmodule HexpmMcpTest do
 
   describe "health_check/1" do
     test "returns structured health report", %{bypass: bypass} do
+      # Keep updated_at < 90 days old so maintenance status is "Active". Computed
+      # relative to now so the assertion doesn't rot as wall-clock time passes.
+      recent = DateTime.utc_now() |> DateTime.add(-30, :day) |> DateTime.to_iso8601()
+
       Bypass.stub(bypass, "GET", "/packages/req", fn conn ->
         respond_json(
           conn,
@@ -313,7 +317,7 @@ defmodule HexpmMcpTest do
             downloads_all: 11_000_000,
             downloads_recent: 1_600_000,
             inserted_at: "2022-01-01T00:00:00Z",
-            updated_at: "2026-02-01T00:00:00Z"
+            updated_at: recent
           )
         )
       end)
@@ -414,15 +418,20 @@ defmodule HexpmMcpTest do
 
       result = HexpmMcp.parse_deps_string(deps)
       assert length(result) == 3
-      assert {:phoenix, "~> 1.7"} in result
-      assert {:ecto, "~> 3.10"} in result
-      assert {:jason, "~> 1.0"} in result
+      assert {"phoenix", "~> 1.7"} in result
+      assert {"ecto", "~> 3.10"} in result
+      assert {"jason", "~> 1.0"} in result
     end
 
     test "handles exact versions" do
       deps = ~s({:plug, "1.15.0"})
       result = HexpmMcp.parse_deps_string(deps)
-      assert [{:plug, "1.15.0"}] = result
+      assert [{"plug", "1.15.0"}] = result
+    end
+
+    test "returns string names, not atoms (avoids atom-table exhaustion)" do
+      assert [{name, "1.0.0"}] = HexpmMcp.parse_deps_string(~s({:some_pkg, "1.0.0"}))
+      assert is_binary(name)
     end
 
     test "deduplicates" do
