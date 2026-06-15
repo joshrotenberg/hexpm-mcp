@@ -14,7 +14,8 @@ defmodule HexpmMcp.MixProject do
       releases: releases(),
       description: description(),
       package: package(),
-      source_url: @source_url
+      source_url: @source_url,
+      docs: docs()
     ]
   end
 
@@ -38,7 +39,15 @@ defmodule HexpmMcp.MixProject do
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintainers: ["Josh Rotenberg"],
-      files: ~w(lib mix.exs README.md LICENSE .formatter.exs)
+      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE .formatter.exs)
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: ["README.md", "CHANGELOG.md"],
+      source_url: @source_url
     ]
   end
 
@@ -51,7 +60,8 @@ defmodule HexpmMcp.MixProject do
       {:jason, "~> 1.4"},
       {:bypass, "~> 2.1", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.40", only: :dev, runtime: false}
     ]
   end
 
