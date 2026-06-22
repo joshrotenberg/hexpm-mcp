@@ -1,6 +1,8 @@
 # hexpm-mcp
 
 [![CI](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml)
+[![Hex.pm](https://img.shields.io/hexpm/v/hexpm_mcp.svg)](https://hex.pm/packages/hexpm_mcp)
+[![Docs](https://img.shields.io/badge/hexdocs-docs-purple.svg)](https://hexdocs.pm/hexpm_mcp)
 ![Elixir](https://img.shields.io/badge/Elixir-1.17%2B-blueviolet)
 ![OTP](https://img.shields.io/badge/OTP-28-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -150,7 +152,16 @@ To run from source with stdio transport (e.g. for development):
 
 ### iex
 
-The public API is available directly from iex without the MCP server:
+The public API is available directly from iex without the MCP server. Add the
+package to your `mix.exs`:
+
+```elixir
+def deps do
+  [{:hexpm_mcp, "~> 0.3"}]
+end
+```
+
+Or run it straight from a checkout:
 
 ```elixir
 $ MIX_ENV=test iex -S mix
