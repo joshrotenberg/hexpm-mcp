@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.1...v0.3.2) (2026-06-22)
+
+
+### Documentation
+
+* add hex badges and library install instructions ([#56](https://github.com/joshrotenberg/hexpm-mcp/issues/56)) ([3f84fcc](https://github.com/joshrotenberg/hexpm-mcp/commit/3f84fcc28b857d63ccf8dc22c60616be9be34f3d))
+
 ## [0.3.1](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.0...v0.3.1) (2026-06-15)
 
 
