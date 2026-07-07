@@ -63,6 +63,29 @@ defmodule HexpmMcp do
   @type error ::
           :not_found | :rate_limited | {:api_error, integer(), any()} | {:request_failed, any()}
 
+  # ---------------------------------------------------------------------------
+  # Elixir Toolbox (curated discovery)
+  #
+  # Thin delegates to `HexpmMcp.Toolbox`, which already returns parsed maps.
+  # ---------------------------------------------------------------------------
+
+  @doc "List all Elixir Toolbox groups with their categories."
+  defdelegate toolbox_groups(), to: HexpmMcp.Toolbox, as: :groups
+
+  @doc "Get a single Elixir Toolbox group by slug."
+  defdelegate toolbox_group(slug), to: HexpmMcp.Toolbox, as: :group
+
+  @doc "List curated projects in an Elixir Toolbox category."
+  defdelegate toolbox_category(group, category, opts \\ []),
+    to: HexpmMcp.Toolbox,
+    as: :category_projects
+
+  @doc "List trending Elixir Toolbox projects."
+  defdelegate toolbox_trending(opts \\ []), to: HexpmMcp.Toolbox, as: :trending
+
+  @doc "Search packages via Elixir Toolbox."
+  defdelegate toolbox_search(query), to: HexpmMcp.Toolbox, as: :search
+
   @doc """
   Search for packages on hex.pm by name/keywords.
 

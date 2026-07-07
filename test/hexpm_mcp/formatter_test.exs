@@ -3,6 +3,25 @@ defmodule HexpmMcp.FormatterTest do
 
   alias HexpmMcp.Formatter
 
+  defp toolbox_project(overrides \\ %{}) do
+    Map.merge(
+      %{
+        name: "phoenix",
+        description: "Web framework",
+        latest_stable_version: "1.8.0",
+        hex_url: "https://hex.pm/packages/phoenix",
+        docs_url: "https://phoenix.hexdocs.pm/",
+        updated_at: "2026-01-01T00:00:00Z",
+        downloads: %{"all" => 1000, "recent" => 45_678},
+        github: %{name: "phoenixframework/phoenix", stars: 23_000},
+        gitlab: nil,
+        popularity: 95.5,
+        health: ["recently_released", "recently_committed"]
+      },
+      overrides
+    )
+  end
+
   describe "format_number/1" do
     test "formats millions" do
       assert Formatter.format_number(1_234_567) == "1.2M"
@@ -511,6 +530,77 @@ defmodule HexpmMcp.FormatterTest do
     test "handles no deps" do
       data = %{total_checked: 0, upgrades_available: 0, results: []}
       assert Formatter.format_upgrade_check(data) =~ "No dependencies found to check."
+    end
+  end
+
+  describe "format_toolbox_groups/1" do
+    test "renders groups with their categories" do
+      groups = [
+        %{
+          title: "Web",
+          slug: "web",
+          categories: [%{name: "Frameworks", description: "Web frameworks", slug: "frameworks"}]
+        }
+      ]
+
+      out = Formatter.format_toolbox_groups(groups)
+      assert out =~ "# Elixir Toolbox Groups"
+      assert out =~ "1 groups"
+      assert out =~ "## Web (`web`)"
+      assert out =~ "- `frameworks` Frameworks: Web frameworks"
+    end
+  end
+
+  describe "format_toolbox_group/1" do
+    test "renders a single group" do
+      group = %{
+        title: "AI",
+        slug: "ai",
+        categories: [%{name: "LLM Clients", description: "Call LLM APIs", slug: "llm_clients"}]
+      }
+
+      out = Formatter.format_toolbox_group(group)
+      assert out =~ "# AI (`ai`)"
+      assert out =~ "1 categories"
+      assert out =~ "- `llm_clients` LLM Clients: Call LLM APIs"
+    end
+  end
+
+  describe "format_toolbox_category/3 and project rendering" do
+    test "renders a table and details" do
+      out = Formatter.format_toolbox_category("web", "frameworks", [toolbox_project()])
+      assert out =~ "# Elixir Toolbox: web / frameworks"
+      assert out =~ "| Package"
+      assert out =~ "phoenix"
+      assert out =~ "45.7K"
+      assert out =~ "95.5"
+      assert out =~ "released, committed"
+      assert out =~ "### phoenix"
+      assert out =~ "- GitHub: phoenixframework/phoenix"
+      assert out =~ "- Docs: https://phoenix.hexdocs.pm/"
+    end
+
+    test "falls back to GitLab stars and repo line when no GitHub" do
+      project =
+        toolbox_project(%{
+          github: nil,
+          gitlab: %{name: "group/proj", stars: 500}
+        })
+
+      out = Formatter.format_toolbox_category("web", "frameworks", [project])
+      assert out =~ "- GitLab: group/proj"
+    end
+
+    test "renders placeholders for missing popularity and health" do
+      project = toolbox_project(%{popularity: nil, health: []})
+      out = Formatter.format_toolbox_search("phoenix", [project])
+      assert out =~ "# Elixir Toolbox search: phoenix"
+      # popularity and health both render as "-"
+      assert out =~ "| -"
+    end
+
+    test "handles an empty project list" do
+      assert Formatter.format_toolbox_trending([]) =~ "No projects found."
     end
   end
 end
