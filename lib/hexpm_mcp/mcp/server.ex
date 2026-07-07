@@ -43,10 +43,19 @@ defmodule HexpmMcp.MCP.Server do
   component(HexpmMcp.MCP.Tools.SearchDocs)
   component(HexpmMcp.MCP.Tools.DocItem)
 
+  # Elixir Toolbox discovery tools
+  component(HexpmMcp.MCP.Tools.ToolboxGroups)
+  component(HexpmMcp.MCP.Tools.ToolboxGroup)
+  component(HexpmMcp.MCP.Tools.ToolboxCategory)
+  component(HexpmMcp.MCP.Tools.ToolboxTrending)
+  component(HexpmMcp.MCP.Tools.ToolboxSearch)
+
   # Resources
   component(HexpmMcp.MCP.Resources.PackageInfo)
   component(HexpmMcp.MCP.Resources.PackageReadme)
   component(HexpmMcp.MCP.Resources.PackageDocs)
+  component(HexpmMcp.MCP.Resources.ToolboxGroups)
+  component(HexpmMcp.MCP.Resources.ToolboxCategory)
 
   # Prompts
   component(HexpmMcp.MCP.Prompts.AnalyzePackage)

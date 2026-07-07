@@ -642,4 +642,111 @@ defmodule HexpmMcp.Formatter do
   defp status_to_label(:patch_upgrade), do: "patch upgrade available"
   defp status_to_label(:unknown), do: "upgrade status unknown"
   defp status_to_label(_), do: "unknown"
+
+  # ---------------------------------------------------------------------------
+  # Elixir Toolbox
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Format the full Elixir Toolbox taxonomy of groups and categories.
+  """
+  def format_toolbox_groups(groups) do
+    header = "# Elixir Toolbox Groups\n\n#{length(groups)} groups\n\n"
+
+    body =
+      Enum.map_join(groups, "\n\n", fn g ->
+        "## #{g.title} (`#{g.slug}`)\n" <> format_toolbox_categories(g.categories)
+      end)
+
+    header <> body
+  end
+
+  @doc """
+  Format a single Elixir Toolbox group and its categories.
+  """
+  def format_toolbox_group(group) do
+    header = "# #{group.title} (`#{group.slug}`)\n\n#{length(group.categories)} categories\n\n"
+    header <> format_toolbox_categories(group.categories)
+  end
+
+  @doc """
+  Format curated projects in an Elixir Toolbox category.
+  """
+  def format_toolbox_category(group_slug, category_slug, projects) do
+    "# Elixir Toolbox: #{group_slug} / #{category_slug}\n\n#{length(projects)} projects\n\n" <>
+      toolbox_projects_section(projects)
+  end
+
+  @doc """
+  Format trending Elixir Toolbox projects.
+  """
+  def format_toolbox_trending(projects) do
+    "# Trending Elixir Packages\n\n#{length(projects)} projects\n\n" <>
+      toolbox_projects_section(projects)
+  end
+
+  @doc """
+  Format Elixir Toolbox search results.
+  """
+  def format_toolbox_search(query, projects) do
+    "# Elixir Toolbox search: #{query}\n\n#{length(projects)} results\n\n" <>
+      toolbox_projects_section(projects)
+  end
+
+  defp format_toolbox_categories([]), do: "No categories."
+
+  defp format_toolbox_categories(categories) do
+    Enum.map_join(categories, "\n", fn c ->
+      "- `#{c.slug}` #{c.name}: #{c.description}"
+    end)
+  end
+
+  defp toolbox_projects_section([]), do: "No projects found."
+
+  defp toolbox_projects_section(projects) do
+    headers = ["Package", "Version", "Stars", "Recent DLs", "Popularity", "Health"]
+
+    rows =
+      Enum.map(projects, fn p ->
+        [
+          p.name,
+          p.latest_stable_version || "-",
+          format_number(toolbox_stars(p)),
+          format_number(p.downloads["recent"]),
+          format_popularity(p.popularity),
+          format_health(p.health)
+        ]
+      end)
+
+    table = markdown_table(headers, rows)
+
+    details =
+      Enum.map_join(projects, "\n\n", fn p ->
+        "### #{p.name}\n#{p.description}\n- #{p.hex_url}" <>
+          maybe_line("Docs", p.docs_url) <>
+          toolbox_repo_line(p)
+      end)
+
+    table <> "\n\n## Details\n\n" <> details
+  end
+
+  defp toolbox_stars(%{github: %{stars: s}}) when is_integer(s), do: s
+  defp toolbox_stars(%{gitlab: %{stars: s}}) when is_integer(s), do: s
+  defp toolbox_stars(_), do: nil
+
+  defp format_popularity(nil), do: "-"
+  defp format_popularity(p) when is_number(p), do: "#{Float.round(p / 1, 1)}"
+
+  defp format_health([]), do: "-"
+
+  defp format_health(flags) when is_list(flags) do
+    Enum.map_join(flags, ", ", &String.replace(&1, "recently_", ""))
+  end
+
+  defp toolbox_repo_line(%{github: %{name: name}}) when is_binary(name), do: "\n- GitHub: #{name}"
+  defp toolbox_repo_line(%{gitlab: %{name: name}}) when is_binary(name), do: "\n- GitLab: #{name}"
+  defp toolbox_repo_line(_), do: ""
+
+  defp maybe_line(_label, nil), do: ""
+  defp maybe_line(label, value), do: "\n- #{label}: #{value}"
 end
