@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.2...v0.3.3) (2026-07-07)
+
+
+### Features
+
+* add Elixir Toolbox discovery tools and resources ([#59](https://github.com/joshrotenberg/hexpm-mcp/issues/59)) ([97149ee](https://github.com/joshrotenberg/hexpm-mcp/commit/97149eeffea76927a2f31bd63e1939da88c038a2)), closes [#58](https://github.com/joshrotenberg/hexpm-mcp/issues/58)
+
 ## [0.3.2](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.1...v0.3.2) (2026-06-22)
 
 
