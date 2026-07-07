@@ -28,10 +28,11 @@ A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your 
 
 ## Features
 
-- 19 tools for searching, inspecting, comparing, and auditing hex.pm packages
-- 3 URI-template resources for structured package data access
+- 24 tools for searching, inspecting, comparing, auditing, and discovering hex.pm packages
+- 5 resources for structured package and discovery data access
 - 5 guided analysis prompts
 - HexDocs browsing (module listing, doc search, full module docs)
+- Curated package discovery via Elixir Toolbox (groups, trending, enriched search)
 - OSV.dev vulnerability checking
 - Mix.exs dependency auditing and upgrade checking
 - ETS-based response caching with configurable TTL
@@ -74,6 +75,18 @@ A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your 
 |------|-------------|
 | `audit_mix_deps` | Audit a deps list for staleness, retirement, CVEs, and bus factor |
 | `upgrade_check` | Check which deps have newer versions, flag breaking changes |
+
+### Discovery (Elixir Toolbox)
+
+Curated discovery via the [Elixir Toolbox](https://elixir-toolbox.dev) API. Project results carry GitHub/GitLab stats, a popularity score, and health signals not exposed by the raw hex.pm API.
+
+| Tool | Description |
+|------|-------------|
+| `toolbox_groups` | Browse the curated taxonomy of groups and categories |
+| `toolbox_group` | List the categories in a single group |
+| `toolbox_category` | Curated projects in a category (sortable by name or downloads) |
+| `toolbox_trending` | Trending Elixir packages |
+| `toolbox_search` | Search packages with popularity and health signals |
 
 ## Example Output
 
@@ -198,7 +211,7 @@ iex> HexpmMcp.audit_mix_deps(~s({:phoenix, "~> 1.7"}, {:jason, "~> 1.0"}))
 
 ## API Reference
 
-All 20 functions return `{:ok, structured_map}` or `{:error, reason}`.
+All 25 functions return `{:ok, structured_map}` or `{:error, reason}`.
 
 ```elixir
 # Search and lookup
@@ -229,6 +242,13 @@ HexpmMcp.get_readme(name, version \\ nil)
 HexpmMcp.get_docs(name, version \\ nil)
 HexpmMcp.get_doc_item(name, module, version \\ nil)
 HexpmMcp.search_docs(name, query, version \\ nil)
+
+# Elixir Toolbox (curated discovery)
+HexpmMcp.toolbox_groups()
+HexpmMcp.toolbox_group(group)
+HexpmMcp.toolbox_category(group, category, opts \\ [])
+HexpmMcp.toolbox_trending(opts \\ [])
+HexpmMcp.toolbox_search(query)
 ```
 
 ## Architecture
@@ -239,15 +259,16 @@ iex / Elixir code                 MCP clients
    HexpmMcp (public API)         MCP Tools (thin wrappers)
    returns {:ok, map}                  |
         |                         calls HexpmMcp API
-   Client / HexDocs / OSV        then Formatter -> markdown
-   (internal, HTTP clients)      then Response.text()
+   Client / HexDocs / OSV /      then Formatter -> markdown
+   Toolbox (internal clients)    then Response.text()
 ```
 
-- **`HexpmMcp`** -- 20 public functions returning structured maps, usable from iex
+- **`HexpmMcp`** -- 25 public functions returning structured maps, usable from iex
 - **`HexpmMcp.Formatter`** -- markdown formatting for MCP tool output
 - **`HexpmMcp.Client`** -- Req-based hex.pm API client with rate limiting
 - **`HexpmMcp.HexDocs`** -- hexdocs.pm browsing (sidebar data parsing, HTML-to-markdown)
 - **`HexpmMcp.OSV`** -- OSV.dev vulnerability database client
+- **`HexpmMcp.Toolbox`** -- Elixir Toolbox client for curated package discovery
 - **`HexpmMcp.Cache`** -- ETS-based response cache with TTL and periodic sweeping
 - **MCP Tools** -- thin wrappers calling the public API, registered via Anubis Server Components
 
