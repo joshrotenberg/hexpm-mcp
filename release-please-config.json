@@ -3,7 +3,14 @@
     ".": {
       "release-type": "elixir",
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true
+      "bump-patch-for-minor-pre-major": true,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "server.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
   }
 }
