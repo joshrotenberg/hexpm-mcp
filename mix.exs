@@ -42,8 +42,8 @@ defmodule HexpmMcp.MixProject do
   defp elixirc_paths(_), do: ["lib"]
 
   defp description do
-    "MCP server for hex.pm and hexdocs.pm: search, inspect, compare, and audit " <>
-      "Elixir/Erlang packages, browse docs, and check dependencies for vulnerabilities."
+    "MCP server for hex.pm and hexdocs.pm: search, inspect, compare, audit, and " <>
+      "discover Elixir/Erlang packages, browse docs, and check dependencies for vulnerabilities."
   end
 
   defp package do
