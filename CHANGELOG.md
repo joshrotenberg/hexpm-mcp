@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.3...v0.3.4) (2026-07-07)
+
+
+### Miscellaneous Chores
+
+* sync server.json to 0.3.4 and cut release ([#64](https://github.com/joshrotenberg/hexpm-mcp/issues/64)) ([e966f7b](https://github.com/joshrotenberg/hexpm-mcp/commit/e966f7b650bf36382cdb3d656a91c4f299f3a1c7))
+
 ## [0.3.3](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.2...v0.3.3) (2026-07-07)
 
 
