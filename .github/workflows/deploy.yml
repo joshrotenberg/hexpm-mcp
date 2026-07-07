@@ -1,13 +1,32 @@
-name: Deploy to Fly.io (manual)
+name: Deploy to Fly.io
 
 on:
   workflow_dispatch:
+    inputs:
+      url:
+        description: "Base MCP URL to verify after deploy"
+        type: string
+        default: https://hexpm-mcp.fly.dev/mcp
+  workflow_call:
+    inputs:
+      url:
+        description: "Base MCP URL to verify after deploy"
+        type: string
+        default: https://hexpm-mcp.fly.dev/mcp
+    secrets:
+      FLY_API_TOKEN:
+        required: true
 
 jobs:
   deploy:
     name: Deploy to Fly.io
     runs-on: ubuntu-latest
     if: github.repository == 'joshrotenberg/hexpm-mcp'
+    environment:
+      name: production
+      url: ${{ inputs.url }}
+    env:
+      MCP_URL: ${{ inputs.url }}
 
     steps:
       - name: Checkout
@@ -33,7 +52,7 @@ jobs:
             echo "=== Attempt $attempt of $MAX_RETRIES ==="
 
             echo "Sending initialize request..."
-            INIT_RESPONSE=$(curl -s -D /tmp/headers.txt -X POST https://hexpm-mcp.fly.dev/mcp \
+            INIT_RESPONSE=$(curl -s -D /tmp/headers.txt -X POST "$MCP_URL" \
               -H "Content-Type: application/json" \
               -H "Accept: application/json" \
               -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"deploy-check","version":"1.0"}}}')
@@ -56,7 +75,7 @@ jobs:
             sleep 3
 
             echo "Sending initialized notification..."
-            curl -s -X POST https://hexpm-mcp.fly.dev/mcp \
+            curl -s -X POST "$MCP_URL" \
               -H "Content-Type: application/json" \
               -H "Accept: application/json" \
               -H "MCP-Session-Id: $SESSION_ID" \
@@ -65,7 +84,7 @@ jobs:
             sleep 3
 
             echo "Sending test tool call..."
-            TOOL_RESPONSE=$(curl -s -X POST https://hexpm-mcp.fly.dev/mcp \
+            TOOL_RESPONSE=$(curl -s -X POST "$MCP_URL" \
               -H "Content-Type: application/json" \
               -H "Accept: application/json" \
               -H "MCP-Session-Id: $SESSION_ID" \
