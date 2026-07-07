@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
@@ -24,7 +24,7 @@ jobs:
           otp-version: "28"
 
       - name: Cache deps
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             deps
@@ -53,7 +53,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
@@ -62,7 +62,7 @@ jobs:
           otp-version: "28"
 
       - name: Cache deps
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             deps
@@ -71,7 +71,7 @@ jobs:
           restore-keys: ${{ runner.os }}-mix-
 
       - name: Cache PLT
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: _build/dev/*.plt
           key: ${{ runner.os }}-plt-${{ hashFiles('mix.lock') }}
