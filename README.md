@@ -147,9 +147,38 @@ Checked 10 dependencies. 8 warning(s) across 7 package(s).
 
 ## Usage
 
-### Local (stdio)
+### Standalone binary (stdio)
 
-To run from source with stdio transport (e.g. for development):
+Each release publishes a self-contained binary for macOS, Linux, and Windows. It
+bundles the Erlang runtime, so no Elixir toolchain is required.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/joshrotenberg/hexpm-mcp/main/scripts/install.sh | sh
+```
+
+The installer resolves the latest release, picks the right asset for your
+OS and architecture, verifies its sha256, and installs to `~/.local/bin`.
+Binaries and a combined `checksums-sha256.txt` are also attached to every
+[GitHub release](https://github.com/joshrotenberg/hexpm-mcp/releases) if you
+prefer to install by hand.
+
+```json
+{
+  "mcpServers": {
+    "hexpm": {
+      "command": "hexpm_mcp",
+      "args": ["--transport", "stdio"]
+    }
+  }
+}
+```
+
+The binary defaults to stdio, so `args` can be omitted. Run `hexpm_mcp --help`
+for the full option list.
+
+### From source (stdio)
+
+To run from a checkout, e.g. for development:
 
 ```json
 {
