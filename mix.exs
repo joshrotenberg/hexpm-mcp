@@ -68,7 +68,8 @@ defmodule HexpmMcp.MixProject do
     [
       {:anubis_mcp, "~> 1.0"},
       {:bandit, "~> 1.0"},
-      dep(:cheer, "~> 0.2", "CHEER_PATH"),
+      # 0.2.1 for Cheer.parse/3 and Cheer.argv/0; 0.2.0 has neither.
+      dep(:cheer, "~> 0.2.1", "CHEER_PATH"),
       dep(:tinfoil, "~> 0.2", "TINFOIL_PATH", runtime: false),
       # Optional so consumers using this as a library don't inherit the build
       # tooling. Always installed for this project, which is what the release

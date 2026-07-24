@@ -20,17 +20,8 @@ defmodule HexpmMcp.Application do
   # its own argv parsed as ours.
   defp resolve_config do
     case Application.get_env(:hexpm_mcp, :transport) do
-      :none ->
-        {:serve, [transport: :none, port: nil]}
-
-      _ ->
-        case Cheer.run(HexpmMcp.CLI, HexpmMcp.CLI.argv(), prog: "hexpm_mcp") do
-          {:serve, opts} -> {:serve, opts}
-          # Cheer already printed help or version.
-          :ok -> :handled
-          # Cheer already printed the usage error.
-          {:error, :usage} -> :usage_error
-        end
+      :none -> {:serve, [transport: :none, port: nil]}
+      _ -> HexpmMcp.CLI.parse()
     end
   end
 
