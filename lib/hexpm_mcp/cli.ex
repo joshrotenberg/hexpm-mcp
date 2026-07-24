@@ -23,6 +23,7 @@ defmodule HexpmMcp.CLI do
   command "hexpm_mcp" do
     about("MCP server for hex.pm and hexdocs.pm")
     version(@version)
+    parse_only()
 
     after_help("""
     The default transport depends on how the server was started: stdio for the
@@ -63,13 +64,6 @@ defmodule HexpmMcp.CLI do
       {:error, :usage} -> :usage_error
     end
   end
-
-  # Nothing here dispatches through Cheer.run/3, which would reach this. It
-  # exists because a leaf command without it warns, and CI compiles with
-  # --warnings-as-errors. Removable once joshrotenberg/cheer#140 lands a
-  # parse-only marker.
-  @impl Cheer.Command
-  def run(args, _raw), do: {:serve, to_opts(args)}
 
   defp to_opts(args) do
     [transport: transport(args[:transport]), port: args[:port]]
