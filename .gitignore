@@ -19,3 +19,7 @@ books.json
 /node_modules/
 /package.json
 /package-lock.json
+
+# Burrito / tinfoil build output
+/burrito_out/
+/_tinfoil/
