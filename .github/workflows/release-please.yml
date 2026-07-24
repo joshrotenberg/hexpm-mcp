@@ -4,9 +4,15 @@ on:
   push:
     branches: [main]
 
+# id-token and attestations are needed by the binaries job. A reusable workflow
+# cannot request more than its caller was granted, and release.yml declares both
+# for build provenance attestations, so omitting them here makes GitHub reject
+# this whole file at startup with only "workflow file issue" to go on.
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
+  attestations: write
 
 jobs:
   release-please:
