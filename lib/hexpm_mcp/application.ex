@@ -34,7 +34,12 @@ defmodule HexpmMcp.Application do
   defp transport_children(opts) do
     case Keyword.fetch!(opts, :transport) do
       :stdio ->
-        [{HexpmMcp.MCP.Server, transport: :stdio}]
+        # StdioLifecycle must come after the server so the transport it watches
+        # is already registered.
+        [
+          {HexpmMcp.MCP.Server, transport: :stdio},
+          HexpmMcp.MCP.StdioLifecycle
+        ]
 
       :http ->
         [

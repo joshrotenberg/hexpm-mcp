@@ -59,13 +59,20 @@ defmodule HexpmMcp.CLI do
   @spec parse() :: {:serve, keyword()} | :handled | :usage_error
   def parse do
     case Cheer.parse(__MODULE__, Cheer.argv(), prog: "hexpm_mcp") do
-      {:ok, __MODULE__, args} -> {:serve, to_opts(args)}
+      {:ok, __MODULE__, args} -> {:serve, config(args)}
       :handled -> :handled
       {:error, :usage} -> :usage_error
     end
   end
 
-  defp to_opts(args) do
+  @doc """
+  Turn parsed arguments into server configuration.
+
+  A `nil` transport resolves to the runtime's default, and a `nil` port defers
+  to app config, which `runtime.exs` populates from `HEXPM_MCP_PORT` in prod.
+  """
+  @spec config(map()) :: keyword()
+  def config(args) do
     [transport: transport(args[:transport]), port: args[:port]]
   end
 
