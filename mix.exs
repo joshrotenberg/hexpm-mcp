@@ -169,19 +169,16 @@ defmodule HexpmMcp.MixProject do
       # homebrew and scoop stay off until this repo has a tap-push credential.
       # Enabling them is one block each here plus a COMMITTER_TOKEN secret.
       #
-      # Pinned rather than inferred. Tinfoil's autodetection reads elixir from
-      # the `~> 1.17` floor (this project builds on 1.19) and otp from whichever
-      # runtime ran the generator, which produced the impossible pair 1.17/29.
-      # Its zig inference is also broken and always yields the fallback. See
-      # joshrotenberg/tinfoil#105 and #106.
-      #
-      # elixir and otp match ci.yml and the Dockerfile. zig 0.15.2 is what
-      # burrito 1.5.x requires; it moves to 0.16.0 in 1.6.0, which we cannot
-      # take yet (see the :burrito dep note above).
+      # release-please already creates the GitHub Release when the release PR
+      # merges, so tinfoil attaches the archives to it rather than creating its
+      # own. This also avoids racing the tag push.
+      trigger: :release_published,
+      # elixir and otp are pinned to match ci.yml and the Dockerfile rather than
+      # tracking whichever runtime generated this workflow. zig is left to
+      # tinfoil, which reads it from Burrito.get_versions/0.
       ci: [
         elixir_version: "1.19",
-        otp_version: "28",
-        zig_version: "0.15.2"
+        otp_version: "28"
       ]
     ]
   end
