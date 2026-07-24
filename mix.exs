@@ -70,7 +70,9 @@ defmodule HexpmMcp.MixProject do
       {:bandit, "~> 1.0"},
       # 0.2.1 for Cheer.parse/3 and Cheer.argv/0; 0.2.0 has neither.
       dep(:cheer, "~> 0.2.1", "CHEER_PATH"),
-      dep(:tinfoil, "~> 0.2", "TINFOIL_PATH", runtime: false),
+      # 0.2.21 for `tinfoil.publish --attach --tag` and the workflow_call
+      # trigger the generated workflow uses; 0.2.20 has neither.
+      dep(:tinfoil, "~> 0.2.21", "TINFOIL_PATH", runtime: false),
       # Optional so consumers using this as a library don't inherit the build
       # tooling. Always installed for this project, which is what the release
       # needs. Runtime calls are guarded with Code.ensure_loaded?/1.
@@ -169,10 +171,13 @@ defmodule HexpmMcp.MixProject do
       # homebrew and scoop stay off until this repo has a tap-push credential.
       # Enabling them is one block each here plus a COMMITTER_TOKEN secret.
       #
-      # release-please already creates the GitHub Release when the release PR
-      # merges, so tinfoil attaches the archives to it rather than creating its
-      # own. This also avoids racing the tag push.
-      trigger: :release_published,
+      # release-please creates the tag and the GitHub Release with the default
+      # GITHUB_TOKEN, and GitHub does not start workflow runs from events that
+      # token creates. So neither a tag push nor a release event would ever
+      # reach this workflow. release-please.yml calls it directly instead, the
+      # same way it already calls deploy.yml, and tinfoil attaches the archives
+      # to the release that already exists.
+      trigger: :workflow_call,
       # elixir and otp are pinned to match ci.yml and the Dockerfile rather than
       # tracking whichever runtime generated this workflow. zig is left to
       # tinfoil, which reads it from Burrito.get_versions/0.
