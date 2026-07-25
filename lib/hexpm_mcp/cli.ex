@@ -28,6 +28,8 @@ defmodule HexpmMcp.CLI do
     after_help("""
     The default transport depends on how the server was started: stdio for the
     standalone binary, http otherwise. Pass --transport to be explicit.
+
+    The http transport serves MCP at /mcp, e.g. http://localhost:8765/mcp.
     """)
 
     option(:transport,

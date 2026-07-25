@@ -3,6 +3,8 @@ defmodule HexpmMcp.Application do
 
   use Application
 
+  require Logger
+
   # start/2 halts on --help, --version, and usage errors, so it does not always
   # return. That is intended for a CLI entry point, not a defect.
   @dialyzer {:nowarn_function, start: 2}
@@ -28,7 +30,21 @@ defmodule HexpmMcp.Application do
   defp start_supervisor(opts) do
     children = [HexpmMcp.Cache] ++ transport_children(opts)
 
-    Supervisor.start_link(children, strategy: :one_for_one, name: HexpmMcp.Supervisor)
+    with {:ok, pid} <-
+           Supervisor.start_link(children, strategy: :one_for_one, name: HexpmMcp.Supervisor) do
+      log_endpoint(opts)
+      {:ok, pid}
+    end
+  end
+
+  # Bandit's own startup line reports the bind address but not the path, and the
+  # server only answers on /mcp. Clients that guess the root get a 404, so say
+  # where it is. Logging goes to stderr, so this is safe in stdio mode too, but
+  # there is no endpoint to report there.
+  defp log_endpoint(opts) do
+    if Keyword.fetch!(opts, :transport) == :http do
+      Logger.info("MCP endpoint: http://localhost:#{port(opts)}/mcp")
+    end
   end
 
   defp transport_children(opts) do
