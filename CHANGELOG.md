@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.6](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.5...v0.3.6) (2026-07-25)
+
+
+### Bug Fixes
+
+* bump tinfoil to 0.2.22 so the release tag reaches tinfoil.build ([#71](https://github.com/joshrotenberg/hexpm-mcp/issues/71)) ([cc4c8b1](https://github.com/joshrotenberg/hexpm-mcp/commit/cc4c8b114e5b3e73d024df5ad7009a51e383ae9c))
+
 ## [0.3.5](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.4...v0.3.5) (2026-07-24)
 
 
