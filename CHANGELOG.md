@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.5](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.4...v0.3.5) (2026-07-24)
+
+
+### Features
+
+* package as a standalone binary with burrito and tinfoil ([#68](https://github.com/joshrotenberg/hexpm-mcp/issues/68)) ([683267e](https://github.com/joshrotenberg/hexpm-mcp/commit/683267eeda53f025f09f916382d9691a79035c63))
+
+
+### Bug Fixes
+
+* grant the attestation permissions release.yml needs ([#69](https://github.com/joshrotenberg/hexpm-mcp/issues/69)) ([c752a73](https://github.com/joshrotenberg/hexpm-mcp/commit/c752a73e9412f7569c40c213dcb9efa566bee28c))
+
 ## [0.3.4](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.3...v0.3.4) (2026-07-07)
 
 

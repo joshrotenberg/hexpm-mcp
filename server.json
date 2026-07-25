@@ -3,7 +3,7 @@
   "name": "io.github.joshrotenberg/hexpm-mcp",
   "title": "Hex.pm MCP",
   "description": "MCP server for hex.pm and hexdocs.pm: search, inspect, compare, audit, and discover Elixir packages",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "websiteUrl": "https://github.com/joshrotenberg/hexpm-mcp",
   "repository": {
     "url": "https://github.com/joshrotenberg/hexpm-mcp",
