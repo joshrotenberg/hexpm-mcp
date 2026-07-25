@@ -157,13 +157,40 @@ defmodule HexpmMcp.MixProject do
 
   defp tinfoil do
     [
+      # darwin is cross-compiled from Linux rather than built on a macOS
+      # runner. macos-latest is now macos-26-arm64, and Zig 0.15.2 (what burrito
+      # 1.5.x requires) cannot link against the macOS 26 SDK. Cross-compiling
+      # sidesteps the host SDK entirely: Zig uses its own bundled macOS libc
+      # stubs. This is the same approach tinfoil already takes for Windows.
+      #
+      # extra_targets cannot shadow a builtin target name, so these carry a
+      # _cross suffix. The triples are unchanged, so asset names are identical
+      # to a native build.
       targets: [
-        :darwin_arm64,
-        :darwin_x86_64,
+        :darwin_arm64_cross,
+        :darwin_x86_64_cross,
         :linux_x86_64,
         :linux_arm64,
         :windows_x86_64
       ],
+      extra_targets: %{
+        darwin_arm64_cross: %{
+          runner: "ubuntu-latest",
+          burrito_os: :darwin,
+          burrito_cpu: :aarch64,
+          triple: "aarch64-apple-darwin",
+          archive_ext: ".tar.gz",
+          os_family: :darwin
+        },
+        darwin_x86_64_cross: %{
+          runner: "ubuntu-latest",
+          burrito_os: :darwin,
+          burrito_cpu: :x86_64,
+          triple: "x86_64-apple-darwin",
+          archive_ext: ".tar.gz",
+          os_family: :darwin
+        }
+      },
       single_runner_per_os: true,
       extra_artifacts: [
         "LICENSE",

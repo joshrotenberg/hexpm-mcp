@@ -33,8 +33,8 @@ jobs:
       matrix:
         include:
           - id: darwin
-            targets: "darwin_arm64,darwin_x86_64"
-            runner: macos-latest
+            targets: "darwin_arm64_cross,darwin_x86_64_cross"
+            runner: ubuntu-latest
           - id: linux
             targets: "linux_x86_64,linux_arm64"
             runner: ubuntu-latest
