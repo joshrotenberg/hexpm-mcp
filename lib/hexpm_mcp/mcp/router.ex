@@ -14,7 +14,9 @@ defmodule HexpmMcp.MCP.Router do
     StreamableHTTP.Plug.call(conn, opts)
   end
 
+  # Clients that guess the root, which several do, get told where to look
+  # instead of a bare "not found".
   defp route(conn, _opts) do
-    Plug.Conn.send_resp(conn, 404, "not found")
+    Plug.Conn.send_resp(conn, 404, "not found: the MCP endpoint is at /mcp\n")
   end
 end
