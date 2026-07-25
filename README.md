@@ -176,6 +176,30 @@ prefer to install by hand.
 The binary defaults to stdio, so `args` can be omitted. Run `hexpm_mcp --help`
 for the full option list.
 
+#### macOS: "Apple could not verify hexpm_mcp"
+
+The binaries are not code-signed or notarized. macOS attaches a quarantine
+attribute to anything downloaded by a browser, and refuses to run an unsigned
+executable carrying it:
+
+> **"hexpm_mcp" Not Opened.** Apple could not verify "hexpm_mcp" is free of
+> malware that may harm your Mac or compromise your privacy.
+
+Choose **Done**, not Move to Trash, then clear the attribute:
+
+```sh
+xattr -d com.apple.quarantine /path/to/hexpm_mcp
+```
+
+The System Settings route works too: Privacy & Security, then **Open Anyway**
+next to the blocked-binary notice.
+
+The installer above is unaffected, because `curl` does not set the quarantine
+attribute. Only browser downloads do, so installing with `curl` or `wget` avoids
+this entirely. If you do download the tarball in a browser, extract it with
+`tar -xzf` from a terminal rather than double-clicking, since Archive Utility
+propagates the attribute to the extracted files.
+
 ### From source (stdio)
 
 To run from a checkout, e.g. for development:
