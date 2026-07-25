@@ -70,9 +70,11 @@ defmodule HexpmMcp.MixProject do
       {:bandit, "~> 1.0"},
       # 0.2.1 for Cheer.parse/3 and Cheer.argv/0; 0.2.0 has neither.
       dep(:cheer, "~> 0.2.1", "CHEER_PATH"),
-      # 0.2.21 for `tinfoil.publish --attach --tag` and the workflow_call
-      # trigger the generated workflow uses; 0.2.20 has neither.
-      dep(:tinfoil, "~> 0.2.21", "TINFOIL_PATH", runtime: false),
+      # 0.2.22 threads the release tag into `tinfoil.build`. Before it, the
+      # version check read GITHUB_REF_NAME, which under workflow_call is the
+      # caller's branch, so every build failed with "tag main does not match
+      # mix.exs version".
+      dep(:tinfoil, "~> 0.2.22", "TINFOIL_PATH", runtime: false),
       # Optional so consumers using this as a library don't inherit the build
       # tooling. Always installed for this project, which is what the release
       # needs. Runtime calls are guarded with Code.ensure_loaded?/1.
