@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.7](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.6...v0.3.7) (2026-07-26)
+
+
+### Features
+
+* surface the http endpoint path ([#76](https://github.com/joshrotenberg/hexpm-mcp/issues/76)) ([1e349cb](https://github.com/joshrotenberg/hexpm-mcp/commit/1e349cb743976a3069ccedf8cf66779d4f14e21c))
+
+
+### Bug Fixes
+
+* repair the installer's default install dir and document Gatekeeper ([#74](https://github.com/joshrotenberg/hexpm-mcp/issues/74)) ([3fadbe7](https://github.com/joshrotenberg/hexpm-mcp/commit/3fadbe7fbe50463cbc39f23d358643a39f496c3d))
+
 ## [0.3.6](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.5...v0.3.6) (2026-07-25)
 
 
