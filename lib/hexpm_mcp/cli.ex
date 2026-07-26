@@ -2,7 +2,7 @@ defmodule HexpmMcp.CLI do
   @moduledoc """
   Command-line interface for the server.
 
-  `HexpmMcp.Application.start/2` is the real entry point in every mode. Burrito
+  The OTP application callback is the real entry point in every mode. Burrito
   boots the BEAM and hands control to the OTP application callback; it never
   calls a `main/1`, and the `main_module` release key is metadata only. So this
   module turns argv into configuration and lets `start/2` build the supervision

@@ -26,6 +26,68 @@ A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your 
 }
 ```
 
+## Installation
+
+Three ways to get it, depending on how you want to use it.
+
+### Standalone binary (recommended)
+
+A self-contained binary for macOS, Linux, and Windows. It bundles the Erlang
+runtime, so no Elixir toolchain is required.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/joshrotenberg/hexpm-mcp/main/scripts/install.sh | sh
+```
+
+The installer resolves the latest release, picks the asset for your OS and
+architecture, verifies its sha256, and installs to `~/.local/bin`. It will tell
+you if that directory is not on your `PATH`.
+
+To choose a different directory or pin a version, pass the flags through `sh`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/joshrotenberg/hexpm-mcp/main/scripts/install.sh | sh -s -- --install-dir /usr/local/bin
+curl -fsSL https://raw.githubusercontent.com/joshrotenberg/hexpm-mcp/main/scripts/install.sh | sh -s -- --version v0.3.6
+```
+
+Windows uses the PowerShell equivalent:
+
+```powershell
+iex (irm https://raw.githubusercontent.com/joshrotenberg/hexpm-mcp/main/scripts/install.ps1)
+```
+
+Every [release](https://github.com/joshrotenberg/hexpm-mcp/releases) also
+attaches the archives and a combined `checksums-sha256.txt` if you would rather
+install by hand.
+
+Verify it works:
+
+```sh
+hexpm_mcp --version
+```
+
+See [Usage](#usage) for the MCP client config, and
+[macOS: "Apple could not verify hexpm_mcp"](#macos-apple-could-not-verify-hexpm_mcp)
+if Gatekeeper blocks a browser-downloaded copy.
+
+### As an Elixir library
+
+For the public API from iex or your own code, without running an MCP server:
+
+```elixir
+def deps do
+  [{:hexpm_mcp, "~> 0.3"}]
+end
+```
+
+### From source
+
+```sh
+git clone https://github.com/joshrotenberg/hexpm-mcp.git
+cd hexpm-mcp
+mix deps.get
+```
+
 ## Features
 
 - 24 tools for searching, inspecting, comparing, auditing, and discovering hex.pm packages
@@ -149,18 +211,7 @@ Checked 10 dependencies. 8 warning(s) across 7 package(s).
 
 ### Standalone binary (stdio)
 
-Each release publishes a self-contained binary for macOS, Linux, and Windows. It
-bundles the Erlang runtime, so no Elixir toolchain is required.
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/joshrotenberg/hexpm-mcp/main/scripts/install.sh | sh
-```
-
-The installer resolves the latest release, picks the right asset for your
-OS and architecture, verifies its sha256, and installs to `~/.local/bin`.
-Binaries and a combined `checksums-sha256.txt` are also attached to every
-[GitHub release](https://github.com/joshrotenberg/hexpm-mcp/releases) if you
-prefer to install by hand.
+Once [installed](#standalone-binary-recommended):
 
 ```json
 {
@@ -175,6 +226,13 @@ prefer to install by hand.
 
 The binary defaults to stdio, so `args` can be omitted. Run `hexpm_mcp --help`
 for the full option list.
+
+To serve over HTTP instead, pass `--transport http`. MCP is served at `/mcp`:
+
+```sh
+hexpm_mcp --transport http --port 1234
+# MCP endpoint: http://localhost:1234/mcp
+```
 
 #### macOS: "Apple could not verify hexpm_mcp"
 
@@ -218,16 +276,8 @@ To run from a checkout, e.g. for development:
 
 ### iex
 
-The public API is available directly from iex without the MCP server. Add the
-package to your `mix.exs`:
-
-```elixir
-def deps do
-  [{:hexpm_mcp, "~> 0.3"}]
-end
-```
-
-Or run it straight from a checkout:
+The public API is available directly from iex without the MCP server, either
+via the [Hex dependency](#as-an-elixir-library) or straight from a checkout:
 
 ```elixir
 $ MIX_ENV=test iex -S mix
@@ -264,7 +314,7 @@ iex> HexpmMcp.audit_mix_deps(~s({:phoenix, "~> 1.7"}, {:jason, "~> 1.0"}))
 
 ## API Reference
 
-All 25 functions return `{:ok, structured_map}` or `{:error, reason}`.
+Every function returns `{:ok, structured_map}` or `{:error, reason}`.
 
 ```elixir
 # Search and lookup
@@ -323,6 +373,8 @@ iex / Elixir code                 MCP clients
 - **`HexpmMcp.OSV`** -- OSV.dev vulnerability database client
 - **`HexpmMcp.Toolbox`** -- Elixir Toolbox client for curated package discovery
 - **`HexpmMcp.Cache`** -- ETS-based response cache with TTL and periodic sweeping
+- **`HexpmMcp.CLI`** -- Cheer command tree; turns argv into the server's configuration
+- **`HexpmMcp.MCP.StdioLifecycle`** -- exits 0 when a stdio client disconnects
 - **MCP Tools** -- thin wrappers calling the public API, registered via Anubis Server Components
 
 ## Development
