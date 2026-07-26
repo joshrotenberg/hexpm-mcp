@@ -67,7 +67,7 @@ try {
   try {
     Invoke-WebRequest -Uri $SumsUrl -OutFile $SumsPath -UseBasicParsing
     # Each line in checksums-sha256.txt is "<sha>  <filename>" (two
-    # spaces). Match by suffix — PowerShell's -like uses * as wildcard,
+    # spaces). Match by suffix; PowerShell's -like uses * as wildcard,
     # no regex escaping needed. Handle both "  name" and "  *name"
     # (the binary-mode prefix some tools emit).
     $line = Get-Content $SumsPath | Where-Object {
