@@ -1,62 +1,136 @@
 defmodule HexpmMcp.MCP.StdioLifecycleTest do
   use ExUnit.Case, async: true
 
-  import ExUnit.CaptureLog
+  @moduletag :tmp_dir
 
-  alias HexpmMcp.MCP.StdioLifecycle
+  @application """
+  System.argv(["--transport", "stdio"])
+  {:ok, _applications} = Application.ensure_all_started(:hexpm_mcp)
+  Process.sleep(:infinity)
+  """
 
-  # The clean-stop branch calls System.halt/1, which would take the test run
-  # down with it, so it is covered by the binary smoke test rather than here.
-  # What is testable is that everything else is left alone.
+  test "the actual application exits cleanly when stdin is already at EOF", %{tmp_dir: dir} do
+    assert {0, "", ""} = subprocess(dir, "", @application)
+  end
 
-  describe "handle_info/2" do
-    test "ignores a transport that died abnormally, leaving it to the supervisor" do
-      state = %{server: HexpmMcp.MCP.Server}
-      down = {:DOWN, make_ref(), :process, self(), :killed}
+  test "the actual application drains a literal discovery request before EOF", %{tmp_dir: dir} do
+    request = %{
+      "jsonrpc" => "2.0",
+      "id" => "eof-discover",
+      "method" => "server/discover",
+      "params" => %{
+        "_meta" => %{
+          "io.modelcontextprotocol/protocolVersion" => "2026-07-28",
+          "io.modelcontextprotocol/clientCapabilities" => %{}
+        }
+      }
+    }
 
-      assert StdioLifecycle.handle_info(down, state) == {:noreply, state}
-    end
+    assert {0, output, ""} = subprocess(dir, JSON.encode!(request) <> "\n", @application)
+    assert [line] = String.split(output, "\n", trim: true)
 
-    test "ignores an exit reason that is neither normal nor shutdown" do
-      state = %{server: HexpmMcp.MCP.Server}
-      down = {:DOWN, make_ref(), :process, self(), {:error, :badarg}}
+    assert %{"id" => "eof-discover", "jsonrpc" => "2.0", "result" => result} =
+             JSON.decode!(line)
 
-      assert StdioLifecycle.handle_info(down, state) == {:noreply, state}
-    end
+    assert result["supportedVersions"] == ["2026-07-28"]
+    assert get_in(result, ["_meta", "io.modelcontextprotocol/serverInfo", "name"]) == "hexpm-mcp"
+  end
 
-    test "ignores unrelated messages" do
-      state = %{server: HexpmMcp.MCP.Server}
+  test "a transport startup failure reports stderr and exits nonzero", %{tmp_dir: dir} do
+    program = """
+    true = Process.register(self(), :occupied_stdio)
+    runtime = HexpmMcp.MCP.Server.runtime()
 
-      assert StdioLifecycle.handle_info(:tick, state) == {:noreply, state}
+    {:ok, _supervisor} =
+      Supervisor.start_link(
+        [{HexpmMcp.MCP.StdioLifecycle, runtime: runtime, name: :occupied_stdio}],
+        strategy: :one_for_one
+      )
+
+    Process.sleep(:infinity)
+    """
+
+    assert {1, "", errors} = subprocess(dir, "", program)
+    assert errors =~ "hexpm-mcp stdio failed:"
+    assert errors =~ "already_started"
+  end
+
+  test "a serving exception also exits nonzero instead of leaving the supervisor running", %{
+    tmp_dir: dir
+  } do
+    program = """
+    {:ok, _supervisor} =
+      Supervisor.start_link(
+        [{HexpmMcp.MCP.StdioLifecycle, runtime: :invalid_runtime}],
+        strategy: :one_for_one
+      )
+
+    Process.sleep(:infinity)
+    """
+
+    assert {1, "", errors} = subprocess(dir, "", program)
+    assert errors =~ "hexpm-mcp stdio failed:"
+    assert errors =~ "FunctionClauseError"
+  end
+
+  defp subprocess(dir, input, program) do
+    input_path = Path.join(dir, "stdin")
+    error_path = Path.join(dir, "stderr")
+    File.write!(input_path, input)
+
+    shell = System.find_executable("sh") || flunk("sh executable was not found")
+    elixir = System.find_executable("elixir") || flunk("elixir executable was not found")
+    code_paths = Enum.flat_map(:code.get_path(), &["-pa", List.to_string(&1)])
+
+    command = ~S(input=$1; errors=$2; shift 2; exec "$@" < "$input" 2> "$errors")
+
+    args =
+      ["-c", command, "hexpm-stdio-test", input_path, error_path, elixir, "--erl", "+S 2:2"] ++
+        code_paths ++ ["-e", program]
+
+    port =
+      Port.open({:spawn_executable, shell}, [
+        :binary,
+        :exit_status,
+        :use_stdio,
+        :eof,
+        {:args, args}
+      ])
+
+    try do
+      deadline = System.monotonic_time(:millisecond) + 15_000
+      {status, output} = receive_exit(port, deadline, [])
+      {status, output, File.read!(error_path)}
+    after
+      close_subprocess(port)
     end
   end
 
-  describe "handle_continue/2" do
-    test "warns and carries on when no stdio transport is registered" do
-      state = %{server: __MODULE__.NoSuchServer}
+  defp receive_exit(port, deadline, output) do
+    remaining = max(deadline - System.monotonic_time(:millisecond), 0)
 
-      log =
-        capture_log(fn ->
-          assert StdioLifecycle.handle_continue(:monitor, state) == {:noreply, state}
-        end)
+    receive do
+      {^port, {:data, data}} ->
+        receive_exit(port, deadline, [data | output])
 
-      assert log =~ "stdio transport not registered"
+      {^port, :eof} ->
+        receive_exit(port, deadline, output)
+
+      {^port, {:exit_status, status}} ->
+        {status, output |> Enum.reverse() |> IO.iodata_to_binary()}
+    after
+      remaining -> flunk("stdio subprocess did not exit after EOF")
     end
+  end
 
-    test "monitors the transport when one is registered" do
-      # Stand in for the Anubis transport under the name it would register.
-      name = Anubis.Server.Registry.transport_name(__MODULE__.FakeServer, :stdio)
-      pid = spawn(fn -> Process.sleep(:infinity) end)
-      true = Process.register(pid, name)
-      on_exit(fn -> if Process.alive?(pid), do: Process.exit(pid, :kill) end)
+  defp close_subprocess(port) do
+    case Port.info(port, :os_pid) do
+      {:os_pid, pid} ->
+        System.cmd("kill", ["-TERM", Integer.to_string(pid)], stderr_to_stdout: true)
+        Port.close(port)
 
-      state = %{server: __MODULE__.FakeServer}
-
-      assert StdioLifecycle.handle_continue(:monitor, state) == {:noreply, state}
-
-      # A monitor is in place, so killing the stand-in delivers :DOWN here.
-      Process.exit(pid, :kill)
-      assert_receive {:DOWN, _ref, :process, ^pid, :killed}
+      nil ->
+        :ok
     end
   end
 end

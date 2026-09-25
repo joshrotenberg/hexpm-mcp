@@ -37,10 +37,7 @@ defmodule HexpmMcp.Application do
     end
   end
 
-  # Bandit's own startup line reports the bind address but not the path, and the
-  # server only answers on /mcp. Clients that guess the root get a 404, so say
-  # where it is. Logging goes to stderr, so this is safe in stdio mode too, but
-  # there is no endpoint to report there.
+  # The native listener binds only the MCP endpoint, so report its full URL.
   defp log_endpoint(opts) do
     if Keyword.fetch!(opts, :transport) == :http do
       Logger.info("MCP endpoint: http://localhost:#{port(opts)}/mcp")
@@ -50,17 +47,17 @@ defmodule HexpmMcp.Application do
   defp transport_children(opts) do
     case Keyword.fetch!(opts, :transport) do
       :stdio ->
-        # StdioLifecycle must come after the server so the transport it watches
-        # is already registered.
         [
-          {HexpmMcp.MCP.Server, transport: :stdio},
-          HexpmMcp.MCP.StdioLifecycle
+          {HexpmMcp.MCP.StdioLifecycle, runtime: HexpmMcp.MCP.Server.runtime()}
         ]
 
       :http ->
         [
-          {HexpmMcp.MCP.Server, transport: :streamable_http},
-          {Bandit, plug: HexpmMcp.MCP.Router, port: port(opts), scheme: :http}
+          {MCP.Transport.StreamableHTTP.Server,
+           runtime: HexpmMcp.MCP.Server.runtime(),
+           ip: {0, 0, 0, 0},
+           port: port(opts),
+           allowed_origin_hosts: allowed_origin_hosts()}
         ]
 
       :none ->
@@ -72,5 +69,13 @@ defmodule HexpmMcp.Application do
   # populates from HEXPM_MCP_PORT in prod.
   defp port(opts) do
     Keyword.get(opts, :port) || Application.get_env(:hexpm_mcp, :port, 8765)
+  end
+
+  defp allowed_origin_hosts do
+    Application.get_env(
+      :hexpm_mcp,
+      :allowed_origin_hosts,
+      ["127.0.0.1", "localhost", "::1", "hexpm-mcp.fly.dev"]
+    )
   end
 end

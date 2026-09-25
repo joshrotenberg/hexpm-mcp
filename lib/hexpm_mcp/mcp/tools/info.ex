@@ -3,27 +3,23 @@ defmodule HexpmMcp.MCP.Tools.Info do
   Get detailed information about a hex.pm package.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple, name: "info", description: "Get detailed package information"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:name, :string, required: true, description: "Package name on hex.pm")
-  end
+  argument("name", :string, required: true, description: "Package name on hex.pm")
 
   @impl true
-  def execute(%{name: name}, frame) do
+  def call(%{"name" => name}, _context) do
     case HexpmMcp.get_info(name) do
       {:ok, info} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_package_info(info)), frame}
+        {:ok, MCP.Result.text(Formatter.format_package_info(info))}
 
       {:error, :not_found} ->
-        {:reply, Response.text(Response.tool(), "Package '#{name}' not found on hex.pm."), frame}
+        {:ok, MCP.Result.error("Package '#{name}' not found on hex.pm.")}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to get package info: #{inspect(reason)}"), frame}
+        {:ok, MCP.Result.error("Failed to get package info: #{inspect(reason)}")}
     end
   end
 end

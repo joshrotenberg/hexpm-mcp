@@ -3,27 +3,23 @@ defmodule HexpmMcp.MCP.Tools.Versions do
   List all versions of a hex.pm package.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple, name: "versions", description: "List all package versions"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:name, :string, required: true, description: "Package name on hex.pm")
-  end
+  argument("name", :string, required: true, description: "Package name on hex.pm")
 
   @impl true
-  def execute(%{name: name}, frame) do
+  def call(%{"name" => name}, _context) do
     case HexpmMcp.get_versions(name) do
       {:ok, data} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_versions(data)), frame}
+        {:ok, MCP.Result.text(Formatter.format_versions(data))}
 
       {:error, :not_found} ->
-        {:reply, Response.text(Response.tool(), "Package '#{name}' not found on hex.pm."), frame}
+        {:ok, MCP.Result.error("Package '#{name}' not found on hex.pm.")}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to get versions: #{inspect(reason)}"), frame}
+        {:ok, MCP.Result.error("Failed to get versions: #{inspect(reason)}")}
     end
   end
 end

@@ -3,23 +3,21 @@ defmodule HexpmMcp.MCP.Tools.ToolboxGroups do
   Browse the Elixir Toolbox curated taxonomy of groups and categories.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple, name: "toolbox_groups", description: "Browse the Elixir Toolbox taxonomy"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-  end
+  # Preserve the original zero-argument wire schema without adding properties.
+  input_schema(%{"type" => "object"})
 
   @impl true
-  def execute(_args, frame) do
+  def call(_args, _context) do
     case HexpmMcp.toolbox_groups() do
       {:ok, groups} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_toolbox_groups(groups)), frame}
+        {:ok, MCP.Result.text(Formatter.format_toolbox_groups(groups))}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to list groups: #{inspect(reason)}"), frame}
+        {:ok, MCP.Result.error("Failed to list groups: #{inspect(reason)}")}
     end
   end
 end

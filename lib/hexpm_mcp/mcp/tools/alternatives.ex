@@ -3,27 +3,23 @@ defmodule HexpmMcp.MCP.Tools.Alternatives do
   Find and compare alternative packages for a given hex.pm package.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple, name: "alternatives", description: "Find alternative packages"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:name, :string, required: true, description: "Package name on hex.pm")
-  end
+  argument("name", :string, required: true, description: "Package name on hex.pm")
 
   @impl true
-  def execute(%{name: name}, frame) do
+  def call(%{"name" => name}, _context) do
     case HexpmMcp.find_alternatives(name) do
       {:ok, data} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_alternatives(data)), frame}
+        {:ok, MCP.Result.text(Formatter.format_alternatives(data))}
 
       {:error, :not_found} ->
-        {:reply, Response.text(Response.tool(), "Package '#{name}' not found."), frame}
+        {:ok, MCP.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to find alternatives: #{inspect(reason)}"), frame}
+        {:ok, MCP.Result.error("Failed to find alternatives: #{inspect(reason)}")}
     end
   end
 end

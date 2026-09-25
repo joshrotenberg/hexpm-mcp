@@ -3,27 +3,25 @@ defmodule HexpmMcp.MCP.Tools.UpgradeCheck do
   Check which mix.exs dependencies have newer versions available.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple,
+    name: "upgrade_check",
+    description: "Check mix.exs dependencies for upgrades"
 
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:deps, :string,
-      required: true,
-      description: "Mix.exs deps list as text, e.g. {:phoenix, \"~> 1.7\"}, {:ecto, \"~> 3.10\"}"
-    )
-  end
+  argument("deps", :string,
+    required: true,
+    description: "Mix.exs deps list as text, e.g. {:phoenix, \"~> 1.7\"}, {:ecto, \"~> 3.10\"}"
+  )
 
   @impl true
-  def execute(%{deps: deps}, frame) do
+  def call(%{"deps" => deps}, _context) do
     case HexpmMcp.upgrade_check(deps) do
       {:ok, data} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_upgrade_check(data)), frame}
+        {:ok, MCP.Result.text(Formatter.format_upgrade_check(data))}
 
       {:error, :no_deps_found} ->
-        {:reply, Response.text(Response.tool(), "No dependencies found in the provided text."),
-         frame}
+        {:ok, MCP.Result.error("No dependencies found in the provided text.")}
     end
   end
 end

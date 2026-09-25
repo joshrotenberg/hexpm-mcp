@@ -3,27 +3,23 @@ defmodule HexpmMcp.MCP.Tools.Health do
   Comprehensive health check for a hex.pm package.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple, name: "health", description: "Run a comprehensive package health check"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:name, :string, required: true, description: "Package name on hex.pm")
-  end
+  argument("name", :string, required: true, description: "Package name on hex.pm")
 
   @impl true
-  def execute(%{name: name}, frame) do
+  def call(%{"name" => name}, _context) do
     case HexpmMcp.health_check(name) do
       {:ok, health} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_health_check(health)), frame}
+        {:ok, MCP.Result.text(Formatter.format_health_check(health))}
 
       {:error, :not_found} ->
-        {:reply, Response.text(Response.tool(), "Package '#{name}' not found."), frame}
+        {:ok, MCP.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:error, Error.execution("Health check failed: #{inspect(reason)}"), frame}
+        {:ok, MCP.Result.error("Health check failed: #{inspect(reason)}")}
     end
   end
 end

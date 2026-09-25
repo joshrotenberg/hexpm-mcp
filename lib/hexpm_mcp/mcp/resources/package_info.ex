@@ -1,18 +1,23 @@
 defmodule HexpmMcp.MCP.Resources.PackageInfo do
   @moduledoc "Get package metadata from hex.pm"
 
-  use Anubis.Server.Component,
-    type: :resource,
+  use MCP.Resource,
     name: "package_info",
+    description: "Get package metadata from hex.pm",
     uri_template: "hex://{name}/info",
-    mime_type: "application/json"
+    mime_type: "application/json",
+    completion_arguments: ["name"]
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Client
+  alias HexpmMcp.MCP.PackageCompletion
 
   @impl true
-  def read(%{"name" => pkg_name}, frame) do
+  def complete(%MCP.Completion{argument: "name", value: prefix}, _context) do
+    PackageCompletion.complete(prefix)
+  end
+
+  @impl true
+  def read(%{"uri" => uri, "name" => pkg_name}, _context) do
     case Client.get_package(pkg_name) do
       {:ok, pkg} ->
         data = %{
@@ -27,10 +32,13 @@ defmodule HexpmMcp.MCP.Resources.PackageInfo do
           updated_at: pkg.updated_at
         }
 
-        {:reply, Response.json(Response.resource(), data), frame}
+        {:ok, MCP.Result.resource_read(MCP.Resource.json(uri, MCP.JSONValue.encodable!(data)))}
+
+      {:error, :not_found} ->
+        {:error, MCP.Error.invalid_params("Resource not found", %{"uri" => uri})}
 
       {:error, reason} ->
-        {:error, Error.execution("Package not found: #{inspect(reason)}"), frame}
+        {:error, MCP.Error.execution("Package not found: #{inspect(reason)}")}
     end
   end
 end

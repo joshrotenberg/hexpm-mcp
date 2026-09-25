@@ -3,20 +3,17 @@ defmodule HexpmMcp.MCP.Tools.Compare do
   Compare 2-5 hex.pm packages side by side.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple, name: "compare", description: "Compare 2-5 packages side by side"
 
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:packages, :string,
-      required: true,
-      description: "Comma-separated list of package names (2-5 packages)"
-    )
-  end
+  argument("packages", :string,
+    required: true,
+    description: "Comma-separated list of package names (2-5 packages)"
+  )
 
   @impl true
-  def execute(%{packages: packages_str}, frame) do
+  def call(%{"packages" => packages_str}, _context) do
     names =
       packages_str
       |> String.split(",")
@@ -25,14 +22,13 @@ defmodule HexpmMcp.MCP.Tools.Compare do
 
     case HexpmMcp.compare_packages(names) do
       {:ok, packages} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_comparison(packages)), frame}
+        {:ok, MCP.Result.text(Formatter.format_comparison(packages))}
 
       {:error, :too_few_packages} ->
-        {:reply, Response.text(Response.tool(), "Please provide at least 2 package names."),
-         frame}
+        {:ok, MCP.Result.error("Please provide at least 2 package names.")}
 
       {:error, :too_many_packages} ->
-        {:reply, Response.text(Response.tool(), "Please provide at most 5 package names."), frame}
+        {:ok, MCP.Result.error("Please provide at most 5 package names.")}
     end
   end
 end

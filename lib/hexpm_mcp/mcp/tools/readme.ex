@@ -3,29 +3,24 @@ defmodule HexpmMcp.MCP.Tools.Readme do
   Get the README content for a hex.pm package.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple, name: "readme", description: "Get package README content"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
-
-  schema do
-    field(:name, :string, required: true, description: "Package name on hex.pm")
-    field(:version, :string, description: "Package version (defaults to latest)")
-  end
+  argument("name", :string, required: true, description: "Package name on hex.pm")
+  argument("version", :string, description: "Package version (defaults to latest)")
 
   @impl true
-  def execute(%{name: name} = args, frame) do
-    version = Map.get(args, :version)
+  def call(%{"name" => name} = args, _context) do
+    version = Map.get(args, "version")
 
     case HexpmMcp.get_readme(name, version) do
       {:ok, content} ->
-        {:reply, Response.text(Response.tool(), content), frame}
+        {:ok, MCP.Result.text(content)}
 
       {:error, :not_found} ->
-        {:reply, Response.text(Response.tool(), "README not found for '#{name}'."), frame}
+        {:ok, MCP.Result.error("README not found for '#{name}'.")}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to get README: #{inspect(reason)}"), frame}
+        {:ok, MCP.Result.error("Failed to get README: #{inspect(reason)}")}
     end
   end
 end

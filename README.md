@@ -3,17 +3,36 @@
 [![CI](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml)
 [![Hex.pm](https://img.shields.io/hexpm/v/hexpm_mcp.svg)](https://hex.pm/packages/hexpm_mcp)
 [![Docs](https://img.shields.io/badge/hexdocs-docs-purple.svg)](https://hexdocs.pm/hexpm_mcp)
-![Elixir](https://img.shields.io/badge/Elixir-1.17%2B-blueviolet)
+![Elixir](https://img.shields.io/badge/Elixir-1.18%2B-blueviolet)
 ![OTP](https://img.shields.io/badge/OTP-28-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 MCP server for querying [hex.pm](https://hex.pm) and [hexdocs.pm](https://hexdocs.pm) -- the Elixir/Erlang package registry and documentation hosting.
 
-Built with [Anubis MCP](https://hex.pm/packages/anubis_mcp) + [Bandit](https://hex.pm/packages/bandit) in Elixir.
+Built with `mcp_ex`'s protocol-first server, component, stdio, and native
+Streamable HTTP APIs.
+
+This checkout contains the local `mcp_ex` migration. It speaks MCP
+`2026-07-28` and requires a client supporting that revision. The migration has
+not been released or deployed; published binaries and the public endpoint must
+be checked separately. See [Development](#development) for the local setup.
+
+The local application now uses the optional JSV schema backend, eight-entry
+catalog pages with cache hints, package-name completion for prompts/resources,
+and a read-only `package_review` prompt. If its `focus` argument is omitted,
+an elicitation-capable client asks for quality/security/upgrade and retries;
+other clients can supply `focus` directly. There are still 24 ordinary tools,
+plus six prompts. The separate durable-audit workflow is explicitly opt-in;
+default startup does not create or migrate a database.
+See [the durable audit guide](docs/durable-audit.md) for explicit SQLite/Runner
+ownership, authenticated HTTP acceptance, restart recovery, and important audit
+and deployment limits. The [dependency audit](docs/dependency-audit.md) records
+patched packages and the remaining test-only advisories.
 
 ## Quick Start
 
-A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your MCP client config (Claude Desktop, Claude Code, or any MCP client):
+The published service uses `https://hexpm-mcp.fly.dev/mcp`. Its client
+configuration is shown below; this does not select the local migration:
 
 ```json
 {
@@ -363,7 +382,7 @@ iex / Elixir code                 MCP clients
    returns {:ok, map}                  |
         |                         calls HexpmMcp API
    Client / HexDocs / OSV /      then Formatter -> markdown
-   Toolbox (internal clients)    then Response.text()
+   Toolbox (internal clients)    then MCP.Result.text()
 ```
 
 - **`HexpmMcp`** -- 25 public functions returning structured maps, usable from iex
@@ -374,10 +393,35 @@ iex / Elixir code                 MCP clients
 - **`HexpmMcp.Toolbox`** -- Elixir Toolbox client for curated package discovery
 - **`HexpmMcp.Cache`** -- ETS-based response cache with TTL and periodic sweeping
 - **`HexpmMcp.CLI`** -- Cheer command tree; turns argv into the server's configuration
-- **`HexpmMcp.MCP.StdioLifecycle`** -- exits 0 when a stdio client disconnects
-- **MCP Tools** -- thin wrappers calling the public API, registered via Anubis Server Components
+- **`HexpmMcp.MCP.StdioLifecycle`** -- owns the stdio serving Task, drains requests
+  on EOF, exits 0 on orderly disconnect, and reports transport failures with exit 1
+- **MCP Tools, Resources, and Prompts** -- thin, JSON-shaped protocol components registered with `MCP.Server`
 
 ## Development
+
+Until `mcp_ex` is published, development expects its checkout at `../mcp_ex`.
+Set `MCP_EX_PATH` to use another location.
+
+The tool catalog is captured in `test/fixtures/mcp_tool_catalog.json` to keep
+the Simple DSL migration wire-compatible. Application acceptance tests seed
+domain data and check resource payloads, tool failures, and schema rejection
+through direct dispatch, stdio, and the native HTTP listener.
+
+The independent TypeScript client check lives with the sibling framework:
+
+```sh
+MIX_ENV=test mix compile --warnings-as-errors
+cd ../mcp_ex
+HEXPM_MCP_BUILD_PATH=../hexpm-mcp/_build/test node interop/official_client/check_hexpm.mjs
+```
+
+Install the pinned Node dependencies with `npm ci --ignore-scripts` from
+`mcp_ex/interop/official_client` before its first run. The client check starts
+the real application server with seeded domain responses and exercises both
+stdio and HTTP; it does not verify public Hex services or other client hosts.
+It also checks the three actual tool-list pages, two package-completion paths,
+and an automatically resumed review. Older-only MCP clients still need a
+separate legacy implementation; installing a schema backend does not add one.
 
 ```bash
 # Install dependencies

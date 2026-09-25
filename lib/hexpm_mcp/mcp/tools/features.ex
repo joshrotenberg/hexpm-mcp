@@ -3,30 +3,28 @@ defmodule HexpmMcp.MCP.Tools.Features do
   Get optional features/extras for a package release.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple,
+    name: "features",
+    description: "Get optional features for a package release"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:name, :string, required: true, description: "Package name on hex.pm")
-    field(:version, :string, description: "Release version (defaults to latest)")
-  end
+  argument("name", :string, required: true, description: "Package name on hex.pm")
+  argument("version", :string, description: "Release version (defaults to latest)")
 
   @impl true
-  def execute(%{name: name} = args, frame) do
-    version = Map.get(args, :version)
+  def call(%{"name" => name} = args, _context) do
+    version = Map.get(args, "version")
 
     case HexpmMcp.get_features(name, version) do
       {:ok, data} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_features(data)), frame}
+        {:ok, MCP.Result.text(Formatter.format_features(data))}
 
       {:error, :not_found} ->
-        {:reply, Response.text(Response.tool(), "Package '#{name}' not found."), frame}
+        {:ok, MCP.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to get features: #{inspect(reason)}"), frame}
+        {:ok, MCP.Result.error("Failed to get features: #{inspect(reason)}")}
     end
   end
 end

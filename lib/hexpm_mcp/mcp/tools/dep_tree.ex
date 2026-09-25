@@ -3,32 +3,28 @@ defmodule HexpmMcp.MCP.Tools.DepTree do
   Get the full transitive dependency tree for a package (BFS, max depth 5).
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple, name: "dep_tree", description: "Build a package dependency tree"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:name, :string, required: true, description: "Package name on hex.pm")
-    field(:version, :string, description: "Release version (defaults to latest)")
-    field(:max_depth, :integer, description: "Maximum depth to traverse (default 5, max 5)")
-  end
+  argument("name", :string, required: true, description: "Package name on hex.pm")
+  argument("version", :string, description: "Release version (defaults to latest)")
+  argument("max_depth", :integer, description: "Maximum depth to traverse (default 5, max 5)")
 
   @impl true
-  def execute(%{name: name} = args, frame) do
-    version = Map.get(args, :version)
-    opts = if max_depth = Map.get(args, :max_depth), do: [max_depth: max_depth], else: []
+  def call(%{"name" => name} = args, _context) do
+    version = Map.get(args, "version")
+    opts = if max_depth = Map.get(args, "max_depth"), do: [max_depth: max_depth], else: []
 
     case HexpmMcp.dependency_tree(name, version, opts) do
       {:ok, data} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_dependency_tree(data)), frame}
+        {:ok, MCP.Result.text(Formatter.format_dependency_tree(data))}
 
       {:error, :not_found} ->
-        {:reply, Response.text(Response.tool(), "Package '#{name}' not found."), frame}
+        {:ok, MCP.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to build dependency tree: #{inspect(reason)}"), frame}
+        {:ok, MCP.Result.error("Failed to build dependency tree: #{inspect(reason)}")}
     end
   end
 end

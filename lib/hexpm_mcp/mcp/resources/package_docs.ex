@@ -1,24 +1,25 @@
 defmodule HexpmMcp.MCP.Resources.PackageDocs do
   @moduledoc "Get documentation module listing for a hex.pm package"
 
-  use Anubis.Server.Component,
-    type: :resource,
+  use MCP.Resource,
     name: "package_docs",
+    description: "Get documentation module listing for a hex.pm package",
     uri_template: "hex://{name}/docs",
     mime_type: "application/json"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.HexDocs
 
   @impl true
-  def read(%{"name" => pkg_name}, frame) do
+  def read(%{"uri" => uri, "name" => pkg_name}, _context) do
     case HexDocs.get_modules(pkg_name) do
       {:ok, modules} ->
-        {:reply, Response.json(Response.resource(), modules), frame}
+        {:ok, MCP.Result.resource_read(MCP.Resource.json(uri, MCP.JSONValue.encodable!(modules)))}
+
+      {:error, :not_found} ->
+        {:error, MCP.Error.invalid_params("Resource not found", %{"uri" => uri})}
 
       {:error, reason} ->
-        {:error, Error.execution("Docs not found: #{inspect(reason)}"), frame}
+        {:error, MCP.Error.execution("Docs not found: #{inspect(reason)}")}
     end
   end
 end

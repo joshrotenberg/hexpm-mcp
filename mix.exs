@@ -7,7 +7,7 @@ defmodule HexpmMcp.MixProject do
     [
       app: :hexpm_mcp,
       version: "0.3.7",
-      elixir: "~> 1.17",
+      elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -66,8 +66,24 @@ defmodule HexpmMcp.MixProject do
 
   defp deps do
     [
-      {:anubis_mcp, "~> 1.0"},
-      {:bandit, "~> 1.0"},
+      # mcp_ex is being integrated from its sibling checkout while the
+      # framework is still pre-release. MCP_EX_PATH keeps the target usable
+      # from a different workspace layout during co-development.
+      dep(:mcp_ex, "~> 0.1", "MCP_EX_PATH", path: "../mcp_ex"),
+      dep(:mcp_ex_tasks, "~> 0.1", "MCP_EX_TASKS_PATH", path: framework_path("extensions/tasks")),
+      dep(:mcp_ex_tasks_sqlite, "~> 0.1", "MCP_EX_TASKS_SQLITE_PATH",
+        path: framework_path("extensions/tasks_sqlite")
+      ),
+      dep(:mcp_ex_jsv, "~> 0.1", "MCP_EX_JSV_PATH",
+        path: framework_path("integrations/schema_jsv"),
+        optional: true
+      ),
+      dep(:mcp_ex_plug, "~> 0.1", "MCP_EX_PLUG_PATH",
+        path: framework_path("integrations/plug"),
+        only: [:dev, :test]
+      ),
+      {:bandit, "~> 1.0", only: [:dev, :test]},
+      {:ecto_sqlite3, "~> 0.24.1"},
       # 0.2.1 for Cheer.parse/3 and Cheer.argv/0; 0.2.0 has neither.
       dep(:cheer, "~> 0.2.1", "CHEER_PATH"),
       # 0.2.22 threads the release tag into `tinfoil.build`. Before it, the
@@ -96,18 +112,24 @@ defmodule HexpmMcp.MixProject do
     ]
   end
 
-  # Resolve a dependency against a local checkout when the given env var is set,
-  # and against Hex otherwise. Lets cheer and tinfoil be co-developed alongside
-  # this project without committing path deps:
+  # Resolve a dependency against a local checkout when the given env var is set.
+  # Published dependencies otherwise use Hex; mcp_ex supplies a sibling path as
+  # its pre-release default.
   #
   #     CHEER_PATH=../cheer mix deps.get
   #
   defp dep(app, requirement, env_var, opts \\ []) do
     case System.get_env(env_var) do
-      nil -> {app, requirement, opts}
-      path -> {app, [path: path] ++ opts}
+      nil ->
+        if Keyword.has_key?(opts, :path), do: {app, opts}, else: {app, requirement, opts}
+
+      path ->
+        {app, [path: path] ++ Keyword.delete(opts, :path)}
     end
   end
+
+  defp framework_path(relative),
+    do: Path.join(System.get_env("MCP_EX_PATH", "../mcp_ex"), relative)
 
   defp releases do
     [

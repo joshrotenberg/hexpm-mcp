@@ -3,28 +3,24 @@ defmodule HexpmMcp.MCP.Tools.Release do
   Get detailed information about a specific package release.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use MCP.Tool.Simple, name: "release", description: "Get detailed package release information"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:name, :string, required: true, description: "Package name on hex.pm")
-    field(:version, :string, required: true, description: "Release version (e.g. \"1.8.5\")")
-  end
+  argument("name", :string, required: true, description: "Package name on hex.pm")
+  argument("version", :string, required: true, description: "Release version (e.g. \"1.8.5\")")
 
   @impl true
-  def execute(%{name: name, version: version}, frame) do
+  def call(%{"name" => name, "version" => version}, _context) do
     case HexpmMcp.get_release(name, version) do
       {:ok, data} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_release(data)), frame}
+        {:ok, MCP.Result.text(Formatter.format_release(data))}
 
       {:error, :not_found} ->
-        {:reply, Response.text(Response.tool(), "Release #{name} v#{version} not found."), frame}
+        {:ok, MCP.Result.error("Release #{name} v#{version} not found.")}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to get release: #{inspect(reason)}"), frame}
+        {:ok, MCP.Result.error("Failed to get release: #{inspect(reason)}")}
     end
   end
 end
