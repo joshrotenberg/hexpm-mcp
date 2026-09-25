@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.ToolboxTrending do
   List trending Elixir packages from Elixir Toolbox.
   """
 
-  use MCP.Tool.Simple, name: "toolbox_trending", description: "List trending Elixir packages"
+  use Snodo.Tool.Simple, name: "toolbox_trending", description: "List trending Elixir packages"
 
   alias HexpmMcp.Formatter
 
@@ -15,10 +15,10 @@ defmodule HexpmMcp.MCP.Tools.ToolboxTrending do
 
     case HexpmMcp.toolbox_trending(opts) do
       {:ok, projects} ->
-        {:ok, MCP.Result.text(Formatter.format_toolbox_trending(projects))}
+        {:ok, Snodo.Result.text(Formatter.format_toolbox_trending(projects))}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to fetch trending: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to fetch trending: #{inspect(reason)}")}
     end
   end
 

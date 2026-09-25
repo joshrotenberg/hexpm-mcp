@@ -9,12 +9,12 @@ defmodule HexpmMcp.MCP.Prompts.PackageReview do
   """
 
   alias HexpmMcp.MCP.PackageCompletion
-  alias MCP.Elicitation
-  alias MCP.Result
+  alias Snodo.Elicitation
+  alias Snodo.Result
 
   @focuses ~w(quality security upgrade)
 
-  use MCP.Prompt.Simple,
+  use Snodo.Prompt.Simple,
     name: "package_review",
     description: "Choose a review focus and prepare a read-only package investigation",
     completion_arguments: ["name", "focus"]
@@ -45,11 +45,11 @@ defmodule HexpmMcp.MCP.Prompts.PackageReview do
   end
 
   @impl true
-  def complete(%MCP.Completion{argument: "name", value: prefix}, _context) do
+  def complete(%Snodo.Completion{argument: "name", value: prefix}, _context) do
     PackageCompletion.complete(prefix)
   end
 
-  def complete(%MCP.Completion{argument: "focus", value: prefix}, _context) do
+  def complete(%Snodo.Completion{argument: "focus", value: prefix}, _context) do
     values = Enum.filter(@focuses, &String.starts_with?(&1, prefix))
     {:ok, Result.completion(values, total: length(values), has_more: false)}
   end
@@ -67,7 +67,7 @@ defmodule HexpmMcp.MCP.Prompts.PackageReview do
   end
 
   defp review(_name, _focus) do
-    {:error, MCP.Error.invalid_params("Review focus must be quality, security, or upgrade")}
+    {:error, Snodo.Error.invalid_params("Review focus must be quality, security, or upgrade")}
   end
 
   defp focus_request do

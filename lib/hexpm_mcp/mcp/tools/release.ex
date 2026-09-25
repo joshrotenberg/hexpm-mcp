@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.Release do
   Get detailed information about a specific package release.
   """
 
-  use MCP.Tool.Simple, name: "release", description: "Get detailed package release information"
+  use Snodo.Tool.Simple, name: "release", description: "Get detailed package release information"
 
   alias HexpmMcp.Formatter
 
@@ -14,13 +14,13 @@ defmodule HexpmMcp.MCP.Tools.Release do
   def call(%{"name" => name, "version" => version}, _context) do
     case HexpmMcp.get_release(name, version) do
       {:ok, data} ->
-        {:ok, MCP.Result.text(Formatter.format_release(data))}
+        {:ok, Snodo.Result.text(Formatter.format_release(data))}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("Release #{name} v#{version} not found.")}
+        {:ok, Snodo.Result.error("Release #{name} v#{version} not found.")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to get release: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to get release: #{inspect(reason)}")}
     end
   end
 end

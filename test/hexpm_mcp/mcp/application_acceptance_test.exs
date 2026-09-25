@@ -4,8 +4,8 @@ defmodule HexpmMcp.MCP.ApplicationAcceptanceTest do
   alias HexpmMcp.Cache
   alias HexpmMcp.MCP.Server
   alias HexpmMcp.Types.Package
-  alias MCP.Transport.Stdio
-  alias MCP.Transport.StreamableHTTP.Server, as: HTTPServer
+  alias Snodo.Transport.Stdio
+  alias Snodo.Transport.StreamableHTTP.Server, as: HTTPServer
 
   @protocol "2026-07-28"
   @fixture_config [
@@ -156,7 +156,7 @@ defmodule HexpmMcp.MCP.ApplicationAcceptanceTest do
     end
   end
 
-  # Literal metadata is intentional: MCP.Test supplies these fields, while a
+  # Literal metadata is intentional: Snodo.Test supplies these fields, while a
   # real client must send them. The same envelope exercises each boundary.
   defp dispatch(context, transport, method, params) do
     raw = %{
@@ -175,7 +175,7 @@ defmodule HexpmMcp.MCP.ApplicationAcceptanceTest do
 
   defp run(context, :direct, raw) do
     {:ok, response} =
-      MCP.Server.dispatch(context.runtime, raw, %MCP.Transport.Context{transport: :direct})
+      Snodo.Server.dispatch(context.runtime, raw, %Snodo.Transport.Context{transport: :direct})
 
     response
   end

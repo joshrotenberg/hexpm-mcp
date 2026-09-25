@@ -153,7 +153,7 @@ defmodule HexpmMcp.MCP.DiscoveryWorkflowTest do
 
   defp dispatch(method, params, opts \\ []) do
     {:ok, result} =
-      MCP.Test.dispatch(
+      Snodo.Test.dispatch(
         Server.runtime(),
         Keyword.merge(
           [

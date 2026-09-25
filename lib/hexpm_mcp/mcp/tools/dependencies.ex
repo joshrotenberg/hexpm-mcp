@@ -3,7 +3,9 @@ defmodule HexpmMcp.MCP.Tools.Dependencies do
   Get dependencies for a package version.
   """
 
-  use MCP.Tool.Simple, name: "dependencies", description: "Get dependencies for a package version"
+  use Snodo.Tool.Simple,
+    name: "dependencies",
+    description: "Get dependencies for a package version"
 
   alias HexpmMcp.Formatter
 
@@ -16,13 +18,13 @@ defmodule HexpmMcp.MCP.Tools.Dependencies do
 
     case HexpmMcp.get_dependencies(name, version) do
       {:ok, data} ->
-        {:ok, MCP.Result.text(Formatter.format_dependencies(data))}
+        {:ok, Snodo.Result.text(Formatter.format_dependencies(data))}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("Package '#{name}' not found.")}
+        {:ok, Snodo.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to get dependencies: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to get dependencies: #{inspect(reason)}")}
     end
   end
 end

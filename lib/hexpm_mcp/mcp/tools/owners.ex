@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.Owners do
   Get owners/maintainers of a hex.pm package.
   """
 
-  use MCP.Tool.Simple, name: "owners", description: "Get package owners and maintainers"
+  use Snodo.Tool.Simple, name: "owners", description: "Get package owners and maintainers"
 
   alias HexpmMcp.Formatter
 
@@ -13,13 +13,13 @@ defmodule HexpmMcp.MCP.Tools.Owners do
   def call(%{"name" => name}, _context) do
     case HexpmMcp.get_owners(name) do
       {:ok, owners} ->
-        {:ok, MCP.Result.text(Formatter.format_owners(name, owners))}
+        {:ok, Snodo.Result.text(Formatter.format_owners(name, owners))}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("Package '#{name}' not found.")}
+        {:ok, Snodo.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to get owners: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to get owners: #{inspect(reason)}")}
     end
   end
 end

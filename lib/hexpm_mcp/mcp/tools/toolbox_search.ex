@@ -4,7 +4,7 @@ defmodule HexpmMcp.MCP.Tools.ToolboxSearch do
   popularity, and health signals not exposed by the raw hex.pm search.
   """
 
-  use MCP.Tool.Simple,
+  use Snodo.Tool.Simple,
     name: "toolbox_search",
     description: "Search packages through Elixir Toolbox"
 
@@ -16,10 +16,10 @@ defmodule HexpmMcp.MCP.Tools.ToolboxSearch do
   def call(%{"query" => query}, _context) do
     case HexpmMcp.toolbox_search(query) do
       {:ok, results} ->
-        {:ok, MCP.Result.text(Formatter.format_toolbox_search(query, results))}
+        {:ok, Snodo.Result.text(Formatter.format_toolbox_search(query, results))}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Search failed: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Search failed: #{inspect(reason)}")}
     end
   end
 end

@@ -7,11 +7,11 @@ defmodule HexpmMcp.MCP.Server do
   # compile time and baked in as a literal, so there is no runtime Mix dependency.
   @version Mix.Project.config()[:version]
 
-  use MCP.Server,
+  use Snodo.Server,
     name: "hexpm-mcp",
     version: @version,
-    protocols: [MCP.Protocol.V2026_07_28],
-    schema_validator: MCP.Schema.Validator.JSV,
+    protocols: [Snodo.Protocol.V2026_07_28],
+    schema_validator: Snodo.Schema.Validator.JSV,
     pagination: [page_size: 8],
     discovery_cache: [ttl_ms: 60_000, scope: "public"],
     tools_cache: [ttl_ms: 60_000, scope: "public"],

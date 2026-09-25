@@ -1,7 +1,7 @@
 defmodule HexpmMcp.MCP.Prompts.ComparePackages do
   @moduledoc "Compare multiple hex.pm packages side by side"
 
-  use MCP.Prompt.Simple,
+  use Snodo.Prompt.Simple,
     name: "compare_packages",
     description: "Compare multiple hex.pm packages side by side"
 

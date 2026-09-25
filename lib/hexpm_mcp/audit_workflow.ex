@@ -39,12 +39,12 @@ defmodule HexpmMcp.AuditWorkflow do
 
   alias HexpmMcp.AuditWorkflow.{Executor, Repo, Source, Store, Tool}
   alias HexpmMcp.MCP.Server
-  alias MCP.Extensions.Tasks
-  alias MCP.Extensions.Tasks.Runner
-  alias MCP.Extensions.Tasks.Store, as: TaskStore
-  alias MCP.Extensions.Tasks.Store.SQLite
-  alias MCP.Extensions.Tasks.Store.SQLite.Migration
-  alias MCP.Server.Runtime
+  alias Snodo.Extensions.Tasks
+  alias Snodo.Extensions.Tasks.Runner
+  alias Snodo.Extensions.Tasks.Store, as: TaskStore
+  alias Snodo.Extensions.Tasks.Store.SQLite
+  alias Snodo.Extensions.Tasks.Store.SQLite.Migration
+  alias Snodo.Server.Runtime
 
   @migration_version 2_026_091_401
 
@@ -96,8 +96,8 @@ defmodule HexpmMcp.AuditWorkflow do
     base = Server.runtime()
 
     Runtime.new(
-      router: MCP.Router.register_tool(base.router, Tool),
-      protocols: [MCP.Protocol.V2026_07_28],
+      router: Snodo.Router.register_tool(base.router, Tool),
+      protocols: [Snodo.Protocol.V2026_07_28],
       server_info: Map.put(base.server_info, "name", "hexpm-mcp-durable-audit"),
       capabilities: Map.put(base.capabilities, "extensions", %{Tasks.id() => %{}}),
       schema_validator: base.schema_validator,

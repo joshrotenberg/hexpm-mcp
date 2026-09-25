@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.Alternatives do
   Find and compare alternative packages for a given hex.pm package.
   """
 
-  use MCP.Tool.Simple, name: "alternatives", description: "Find alternative packages"
+  use Snodo.Tool.Simple, name: "alternatives", description: "Find alternative packages"
 
   alias HexpmMcp.Formatter
 
@@ -13,13 +13,13 @@ defmodule HexpmMcp.MCP.Tools.Alternatives do
   def call(%{"name" => name}, _context) do
     case HexpmMcp.find_alternatives(name) do
       {:ok, data} ->
-        {:ok, MCP.Result.text(Formatter.format_alternatives(data))}
+        {:ok, Snodo.Result.text(Formatter.format_alternatives(data))}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("Package '#{name}' not found.")}
+        {:ok, Snodo.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to find alternatives: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to find alternatives: #{inspect(reason)}")}
     end
   end
 end

@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.Readme do
   Get the README content for a hex.pm package.
   """
 
-  use MCP.Tool.Simple, name: "readme", description: "Get package README content"
+  use Snodo.Tool.Simple, name: "readme", description: "Get package README content"
 
   argument("name", :string, required: true, description: "Package name on hex.pm")
   argument("version", :string, description: "Package version (defaults to latest)")
@@ -14,13 +14,13 @@ defmodule HexpmMcp.MCP.Tools.Readme do
 
     case HexpmMcp.get_readme(name, version) do
       {:ok, content} ->
-        {:ok, MCP.Result.text(content)}
+        {:ok, Snodo.Result.text(content)}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("README not found for '#{name}'.")}
+        {:ok, Snodo.Result.error("README not found for '#{name}'.")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to get README: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to get README: #{inspect(reason)}")}
     end
   end
 end

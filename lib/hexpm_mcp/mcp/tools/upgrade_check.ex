@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.UpgradeCheck do
   Check which mix.exs dependencies have newer versions available.
   """
 
-  use MCP.Tool.Simple,
+  use Snodo.Tool.Simple,
     name: "upgrade_check",
     description: "Check mix.exs dependencies for upgrades"
 
@@ -18,10 +18,10 @@ defmodule HexpmMcp.MCP.Tools.UpgradeCheck do
   def call(%{"deps" => deps}, _context) do
     case HexpmMcp.upgrade_check(deps) do
       {:ok, data} ->
-        {:ok, MCP.Result.text(Formatter.format_upgrade_check(data))}
+        {:ok, Snodo.Result.text(Formatter.format_upgrade_check(data))}
 
       {:error, :no_deps_found} ->
-        {:ok, MCP.Result.error("No dependencies found in the provided text.")}
+        {:ok, Snodo.Result.error("No dependencies found in the provided text.")}
     end
   end
 end

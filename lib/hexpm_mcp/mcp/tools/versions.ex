@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.Versions do
   List all versions of a hex.pm package.
   """
 
-  use MCP.Tool.Simple, name: "versions", description: "List all package versions"
+  use Snodo.Tool.Simple, name: "versions", description: "List all package versions"
 
   alias HexpmMcp.Formatter
 
@@ -13,13 +13,13 @@ defmodule HexpmMcp.MCP.Tools.Versions do
   def call(%{"name" => name}, _context) do
     case HexpmMcp.get_versions(name) do
       {:ok, data} ->
-        {:ok, MCP.Result.text(Formatter.format_versions(data))}
+        {:ok, Snodo.Result.text(Formatter.format_versions(data))}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("Package '#{name}' not found on hex.pm.")}
+        {:ok, Snodo.Result.error("Package '#{name}' not found on hex.pm.")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to get versions: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to get versions: #{inspect(reason)}")}
     end
   end
 end

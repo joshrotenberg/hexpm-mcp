@@ -9,16 +9,16 @@ defmodule HexpmMcp.AuditWorkflow.Source do
   or close kills the source promptly, including a blocked database read/pull.
   """
   use GenServer
-  @behaviour MCP.Subscription.Source
+  @behaviour Snodo.Subscription.Source
 
-  alias MCP.Error
-  alias MCP.Extensions.Tasks
-  alias MCP.Extensions.Tasks.Store
-  alias MCP.Extensions.Tasks.Task, as: ProtocolTask
+  alias Snodo.Error
+  alias Snodo.Extensions.Tasks
+  alias Snodo.Extensions.Tasks.Store
+  alias Snodo.Extensions.Tasks.Task, as: ProtocolTask
 
   @max_tasks 32
 
-  @impl MCP.Subscription.Source
+  @impl Snodo.Subscription.Source
   def open(filter, context, %{store: store, poll_interval_ms: interval})
       when is_integer(interval) and interval >= 10 and interval <= 60_000 do
     ids = Map.get(filter, "taskIds", [])
@@ -42,14 +42,14 @@ defmodule HexpmMcp.AuditWorkflow.Source do
     end
   end
 
-  @impl MCP.Subscription.Source
+  @impl Snodo.Subscription.Source
   def next(pid, _options) do
     GenServer.call(pid, :next, :infinity)
   catch
     :exit, _reason -> :closed
   end
 
-  @impl MCP.Subscription.Source
+  @impl Snodo.Subscription.Source
   def close(pid, _reason, _options) do
     # The source is unlinked and owns no external resources. Exit also interrupts
     # an in-flight DB checkout and immediately releases the blocked next/2 caller.

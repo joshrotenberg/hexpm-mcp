@@ -6,7 +6,7 @@ defmodule HexpmMcp.MCP.Tools.Audit do
   single-owner packages, and known vulnerabilities via OSV.dev.
   """
 
-  use MCP.Tool.Simple, name: "audit", description: "Audit package dependencies for risks"
+  use Snodo.Tool.Simple, name: "audit", description: "Audit package dependencies for risks"
 
   alias HexpmMcp.Formatter
 
@@ -19,13 +19,13 @@ defmodule HexpmMcp.MCP.Tools.Audit do
 
     case HexpmMcp.audit_dependencies(name, version) do
       {:ok, audit} ->
-        {:ok, MCP.Result.text(Formatter.format_audit(audit))}
+        {:ok, Snodo.Result.text(Formatter.format_audit(audit))}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("Package '#{name}' not found.")}
+        {:ok, Snodo.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Audit failed: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Audit failed: #{inspect(reason)}")}
     end
   end
 end

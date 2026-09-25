@@ -53,7 +53,7 @@ defmodule HexpmMcp.Application do
 
       :http ->
         [
-          {MCP.Transport.StreamableHTTP.Server,
+          {Snodo.Transport.StreamableHTTP.Server,
            runtime: HexpmMcp.MCP.Server.runtime(),
            ip: {0, 0, 0, 0},
            port: port(opts),

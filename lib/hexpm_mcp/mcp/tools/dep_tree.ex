@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.DepTree do
   Get the full transitive dependency tree for a package (BFS, max depth 5).
   """
 
-  use MCP.Tool.Simple, name: "dep_tree", description: "Build a package dependency tree"
+  use Snodo.Tool.Simple, name: "dep_tree", description: "Build a package dependency tree"
 
   alias HexpmMcp.Formatter
 
@@ -18,13 +18,13 @@ defmodule HexpmMcp.MCP.Tools.DepTree do
 
     case HexpmMcp.dependency_tree(name, version, opts) do
       {:ok, data} ->
-        {:ok, MCP.Result.text(Formatter.format_dependency_tree(data))}
+        {:ok, Snodo.Result.text(Formatter.format_dependency_tree(data))}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("Package '#{name}' not found.")}
+        {:ok, Snodo.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to build dependency tree: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to build dependency tree: #{inspect(reason)}")}
     end
   end
 end

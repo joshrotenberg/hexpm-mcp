@@ -1,7 +1,7 @@
 defmodule HexpmMcp.MCP.Resources.PackageReadme do
   @moduledoc "Get README content for a hex.pm package"
 
-  use MCP.Resource.Simple,
+  use Snodo.Resource.Simple,
     name: "package_readme",
     description: "Get README content for a hex.pm package",
     uri_template: "hex://{name}/readme",
@@ -16,10 +16,10 @@ defmodule HexpmMcp.MCP.Resources.PackageReadme do
         {:ok, content}
 
       {:error, :not_found} ->
-        {:error, MCP.Error.invalid_params("Resource not found", %{"uri" => uri})}
+        {:error, Snodo.Error.invalid_params("Resource not found", %{"uri" => uri})}
 
       {:error, reason} ->
-        {:error, MCP.Error.execution("README not found: #{inspect(reason)}")}
+        {:error, Snodo.Error.execution("README not found: #{inspect(reason)}")}
     end
   end
 end

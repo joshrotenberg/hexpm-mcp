@@ -9,10 +9,10 @@
 
 MCP server for querying [hex.pm](https://hex.pm) and [hexdocs.pm](https://hexdocs.pm) -- the Elixir/Erlang package registry and documentation hosting.
 
-Built with `mcp_ex`'s protocol-first server, component, stdio, and native
+Built with `snodo`'s protocol-first server, component, stdio, and native
 Streamable HTTP APIs.
 
-This checkout contains the local `mcp_ex` migration. It speaks MCP
+This checkout contains the local `snodo` migration. It speaks MCP
 `2026-07-28` and requires a client supporting that revision. The migration has
 not been released or deployed; published binaries and the public endpoint must
 be checked separately. See [Development](#development) for the local setup.
@@ -382,7 +382,7 @@ iex / Elixir code                 MCP clients
    returns {:ok, map}                  |
         |                         calls HexpmMcp API
    Client / HexDocs / OSV /      then Formatter -> markdown
-   Toolbox (internal clients)    then MCP.Result.text()
+   Toolbox (internal clients)    then Snodo.Result.text()
 ```
 
 - **`HexpmMcp`** -- 25 public functions returning structured maps, usable from iex
@@ -395,12 +395,12 @@ iex / Elixir code                 MCP clients
 - **`HexpmMcp.CLI`** -- Cheer command tree; turns argv into the server's configuration
 - **`HexpmMcp.MCP.StdioLifecycle`** -- owns the stdio serving Task, drains requests
   on EOF, exits 0 on orderly disconnect, and reports transport failures with exit 1
-- **MCP Tools, Resources, and Prompts** -- thin, JSON-shaped protocol components registered with `MCP.Server`
+- **MCP Tools, Resources, and Prompts** -- thin, JSON-shaped protocol components registered with `Snodo.Server`
 
 ## Development
 
-Until `mcp_ex` is published, development expects its checkout at `../mcp_ex`.
-Set `MCP_EX_PATH` to use another location.
+Until `snodo` is published, development expects its checkout at `../snodo`.
+Set `SNODO_PATH` to use another location.
 
 The tool catalog is captured in `test/fixtures/mcp_tool_catalog.json` to keep
 the Simple DSL migration wire-compatible. Application acceptance tests seed
@@ -411,12 +411,12 @@ The independent TypeScript client check lives with the sibling framework:
 
 ```sh
 MIX_ENV=test mix compile --warnings-as-errors
-cd ../mcp_ex
+cd ../snodo
 HEXPM_MCP_BUILD_PATH=../hexpm-mcp/_build/test node interop/official_client/check_hexpm.mjs
 ```
 
 Install the pinned Node dependencies with `npm ci --ignore-scripts` from
-`mcp_ex/interop/official_client` before its first run. The client check starts
+`snodo/interop/official_client` before its first run. The client check starts
 the real application server with seeded domain responses and exercises both
 stdio and HTTP; it does not verify public Hex services or other client hosts.
 It also checks the three actual tool-list pages, two package-completion paths,

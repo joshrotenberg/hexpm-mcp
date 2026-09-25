@@ -1,7 +1,7 @@
 defmodule HexpmMcp.MCP.Prompts.RecommendPackages do
   @moduledoc "Find and evaluate hex.pm packages for a given use case"
 
-  use MCP.Prompt.Simple,
+  use Snodo.Prompt.Simple,
     name: "recommend_packages",
     description: "Find and evaluate hex.pm packages for a given use case"
 

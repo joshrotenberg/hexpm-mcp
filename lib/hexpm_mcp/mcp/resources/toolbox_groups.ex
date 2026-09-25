@@ -1,7 +1,7 @@
 defmodule HexpmMcp.MCP.Resources.ToolboxGroups do
   @moduledoc "The Elixir Toolbox curated taxonomy of groups and categories"
 
-  use MCP.Resource.Simple,
+  use Snodo.Resource.Simple,
     name: "toolbox_groups",
     description: "The Elixir Toolbox curated taxonomy of groups and categories",
     uri: "toolbox://groups",
@@ -11,10 +11,10 @@ defmodule HexpmMcp.MCP.Resources.ToolboxGroups do
   def read(_params, _context) do
     case HexpmMcp.toolbox_groups() do
       {:ok, groups} ->
-        {:ok, MCP.JSONValue.encodable!(%{groups: groups})}
+        {:ok, Snodo.JSONValue.encodable!(%{groups: groups})}
 
       {:error, reason} ->
-        {:error, MCP.Error.execution("Failed to list groups: #{inspect(reason)}")}
+        {:error, Snodo.Error.execution("Failed to list groups: #{inspect(reason)}")}
     end
   end
 end

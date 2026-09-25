@@ -66,19 +66,19 @@ defmodule HexpmMcp.MixProject do
 
   defp deps do
     [
-      # mcp_ex is being integrated from its sibling checkout while the
-      # framework is still pre-release. MCP_EX_PATH keeps the target usable
+      # snodo is being integrated from its sibling checkout while the
+      # framework is still pre-release. SNODO_PATH keeps the target usable
       # from a different workspace layout during co-development.
-      dep(:mcp_ex, "~> 0.1", "MCP_EX_PATH", path: "../mcp_ex"),
-      dep(:mcp_ex_tasks, "~> 0.1", "MCP_EX_TASKS_PATH", path: framework_path("extensions/tasks")),
-      dep(:mcp_ex_tasks_sqlite, "~> 0.1", "MCP_EX_TASKS_SQLITE_PATH",
+      dep(:snodo, "~> 0.1", "SNODO_PATH", path: "../snodo"),
+      dep(:snodo_tasks, "~> 0.1", "SNODO_TASKS_PATH", path: framework_path("extensions/tasks")),
+      dep(:snodo_tasks_sqlite, "~> 0.1", "SNODO_TASKS_SQLITE_PATH",
         path: framework_path("extensions/tasks_sqlite")
       ),
-      dep(:mcp_ex_jsv, "~> 0.1", "MCP_EX_JSV_PATH",
+      dep(:snodo_jsv, "~> 0.1", "SNODO_JSV_PATH",
         path: framework_path("integrations/schema_jsv"),
         optional: true
       ),
-      dep(:mcp_ex_plug, "~> 0.1", "MCP_EX_PLUG_PATH",
+      dep(:snodo_plug, "~> 0.1", "SNODO_PLUG_PATH",
         path: framework_path("integrations/plug"),
         only: [:dev, :test]
       ),
@@ -113,7 +113,7 @@ defmodule HexpmMcp.MixProject do
   end
 
   # Resolve a dependency against a local checkout when the given env var is set.
-  # Published dependencies otherwise use Hex; mcp_ex supplies a sibling path as
+  # Published dependencies otherwise use Hex; snodo supplies a sibling path as
   # its pre-release default.
   #
   #     CHEER_PATH=../cheer mix deps.get
@@ -129,7 +129,7 @@ defmodule HexpmMcp.MixProject do
   end
 
   defp framework_path(relative),
-    do: Path.join(System.get_env("MCP_EX_PATH", "../mcp_ex"), relative)
+    do: Path.join(System.get_env("SNODO_PATH", "../snodo"), relative)
 
   defp releases do
     [

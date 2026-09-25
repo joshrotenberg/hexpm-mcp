@@ -3,7 +3,9 @@ defmodule HexpmMcp.MCP.Tools.Docs do
   Browse package documentation -- module listing.
   """
 
-  use MCP.Tool.Simple, name: "docs", description: "Browse a package documentation module listing"
+  use Snodo.Tool.Simple,
+    name: "docs",
+    description: "Browse a package documentation module listing"
 
   alias HexpmMcp.Formatter
 
@@ -16,16 +18,16 @@ defmodule HexpmMcp.MCP.Tools.Docs do
 
     case HexpmMcp.get_docs(name, version) do
       {:ok, modules} when modules != [] ->
-        {:ok, MCP.Result.text(Formatter.format_docs(name, version, modules))}
+        {:ok, Snodo.Result.text(Formatter.format_docs(name, version, modules))}
 
       {:ok, []} ->
-        {:ok, MCP.Result.text("No modules found for '#{name}'.")}
+        {:ok, Snodo.Result.text("No modules found for '#{name}'.")}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("Documentation not found for '#{name}'.")}
+        {:ok, Snodo.Result.error("Documentation not found for '#{name}'.")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to get docs: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to get docs: #{inspect(reason)}")}
     end
   end
 end

@@ -1,6 +1,6 @@
 defmodule HexpmMcp.AuditWorkflowTest.ObservedExecutor do
   @moduledoc false
-  @behaviour MCP.Extensions.Tasks.WorkExecutor
+  @behaviour Snodo.Extensions.Tasks.WorkExecutor
   alias HexpmMcp.AuditWorkflow.Executor
 
   @impl true
@@ -20,8 +20,8 @@ end
 defmodule HexpmMcp.AuditWorkflowTest.Endpoint do
   @moduledoc false
   @behaviour Plug
-  alias MCP.Transport.Plug, as: MCPPlug
   alias Plug.Conn
+  alias Snodo.Transport.Plug, as: MCPPlug
 
   @impl true
   def init(opts) do
@@ -47,7 +47,7 @@ end
 
 defmodule HexpmMcp.AuditWorkflowTest.TrackedSource do
   @moduledoc false
-  @behaviour MCP.Subscription.Source
+  @behaviour Snodo.Subscription.Source
   alias HexpmMcp.AuditWorkflow.Source
 
   @impl true
@@ -73,11 +73,11 @@ defmodule HexpmMcp.AuditWorkflowTest do
   alias HexpmMcp.AuditWorkflow.{Executor, Repo, Source, Tool}
   alias HexpmMcp.AuditWorkflowTest.ObservedExecutor
   alias HexpmMcp.MCP.Server
-  alias MCP.Extensions.Tasks
-  alias MCP.Extensions.Tasks.Store
-  alias MCP.Extensions.Tasks.Work
-  alias MCP.Protocol.V2026_07_28
-  alias MCP.Subscription
+  alias Snodo.Extensions.Tasks
+  alias Snodo.Extensions.Tasks.Store
+  alias Snodo.Extensions.Tasks.Work
+  alias Snodo.Protocol.V2026_07_28
+  alias Snodo.Subscription
 
   setup do
     directory = Path.join(System.tmp_dir!(), "hexpm-audit-#{System.unique_integer([:positive])}")
@@ -154,7 +154,7 @@ defmodule HexpmMcp.AuditWorkflowTest do
     assert :empty = Store.claim_next(ctx.store, "admission-check", 1_000)
 
     assert {:ok, %{"error" => %{"code" => -32_021}}} =
-             MCP.Test.dispatch(runtime,
+             Snodo.Test.dispatch(runtime,
                protocol: "2026-07-28",
                method: "tools/call",
                params: call_params(),
@@ -301,7 +301,7 @@ defmodule HexpmMcp.AuditWorkflowTest do
     opts = %{store: ctx.store, poll_interval_ms: 10}
 
     for ids <- [[], Enum.map(1..33, &Integer.to_string/1)] do
-      assert {:error, %MCP.Error{code: -32_602}} =
+      assert {:error, %Snodo.Error{code: -32_602}} =
                Source.open(%{"taskIds" => ids}, context("team-a"), opts)
     end
 
@@ -329,10 +329,10 @@ defmodule HexpmMcp.AuditWorkflowTest do
   end
 
   test "executor rejects changed descriptor types and cancellation before calling upstream" do
-    cancellation = MCP.Cancellation.new()
+    cancellation = Snodo.Cancellation.new()
     work = Work.new!("id", "other", %{})
     assert {:failed, %{"code" => -32_602}, _} = Executor.execute(work, cancellation, nil)
-    MCP.Cancellation.cancel(cancellation)
+    Snodo.Cancellation.cancel(cancellation)
     {:ok, work} = Work.tool_call("id", Tool.name(), call_params()["arguments"])
     assert {:failed, %{"code" => -32_603}, _} = Executor.execute(work, cancellation, nil)
   end
@@ -371,7 +371,7 @@ defmodule HexpmMcp.AuditWorkflowTest do
 
   defp insert_expired(store, id) do
     task =
-      MCP.Extensions.Tasks.Task.new!(
+      Snodo.Extensions.Tasks.Task.new!(
         id: id,
         created_at: DateTime.utc_now() |> DateTime.add(-60, :second) |> DateTime.to_iso8601(),
         ttl_ms: 1
@@ -415,7 +415,7 @@ defmodule HexpmMcp.AuditWorkflowTest do
 
     runtime = %{
       runtime
-      | subscription_source: %MCP.Subscription.Source.Config{
+      | subscription_source: %Snodo.Subscription.Source.Config{
           module: HexpmMcp.AuditWorkflowTest.TrackedSource,
           options: %{store: ctx.store, poll_interval_ms: 10, observer: self()}
         }
@@ -423,7 +423,7 @@ defmodule HexpmMcp.AuditWorkflowTest do
 
     token_a = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
     token_b = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
-    executor = start_supervised!({MCP.Server.Executor, max_concurrency: 4, max_queue: 8})
+    executor = start_supervised!({Snodo.Server.Executor, max_concurrency: 4, max_queue: 8})
 
     listener =
       start_supervised!(
@@ -671,7 +671,7 @@ defmodule HexpmMcp.AuditWorkflowTest do
   end
 
   defp dispatch(runtime, method, params, auth \\ %{"tenant" => "team-a"}) do
-    MCP.Test.dispatch(runtime,
+    Snodo.Test.dispatch(runtime,
       protocol: "2026-07-28",
       method: method,
       params: params,
@@ -732,10 +732,10 @@ defmodule HexpmMcp.AuditWorkflowTest do
   end
 
   defp context(tenant) do
-    %MCP.Context{
+    %Snodo.Context{
       protocol_version: "2026-07-28",
-      protocol: MCP.Protocol.V2026_07_28,
-      transport: %MCP.Transport.Context{transport: :direct},
+      protocol: Snodo.Protocol.V2026_07_28,
+      transport: %Snodo.Transport.Context{transport: :direct},
       auth: if(tenant, do: %{"tenant" => tenant})
     }
   end

@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.Search do
   Search for packages on hex.pm by name/keywords.
   """
 
-  use MCP.Tool.Simple, name: "search", description: "Search hex.pm packages"
+  use Snodo.Tool.Simple, name: "search", description: "Search hex.pm packages"
 
   alias HexpmMcp.Formatter
 
@@ -24,10 +24,10 @@ defmodule HexpmMcp.MCP.Tools.Search do
 
     case HexpmMcp.search(query, opts) do
       {:ok, results} ->
-        {:ok, MCP.Result.text(Formatter.format_search_results(query, results))}
+        {:ok, Snodo.Result.text(Formatter.format_search_results(query, results))}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Search failed: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Search failed: #{inspect(reason)}")}
     end
   end
 

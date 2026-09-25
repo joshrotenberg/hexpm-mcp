@@ -4,8 +4,8 @@ defmodule HexpmMcp.MCP.ServerTest do
   alias HexpmMcp.MCP.Resources.PackageInfo
   alias HexpmMcp.MCP.Resources.ToolboxCategory
   alias HexpmMcp.MCP.Server
-  alias MCP.Protocol.V2026_07_28, as: Protocol
-  alias MCP.Transport.StreamableHTTP.Server, as: HTTPServer
+  alias Snodo.Protocol.V2026_07_28, as: Protocol
+  alias Snodo.Transport.StreamableHTTP.Server, as: HTTPServer
 
   @protocol "2026-07-28"
 
@@ -46,7 +46,7 @@ defmodule HexpmMcp.MCP.ServerTest do
     assert search["inputSchema"]["required"] == ["query"]
     assert get_in(search, ["inputSchema", "properties", "page", "type"]) == "integer"
 
-    # Captured from the raw definitions before adopting MCP.Tool.Simple.
+    # Captured from the raw definitions before adopting Snodo.Tool.Simple.
     expected =
       "test/fixtures/mcp_tool_catalog.json"
       |> File.read!()
@@ -119,7 +119,7 @@ defmodule HexpmMcp.MCP.ServerTest do
   end
 
   defp dispatch(method, params \\ %{}) do
-    MCP.Test.dispatch(Server.runtime(),
+    Snodo.Test.dispatch(Server.runtime(),
       protocol: @protocol,
       method: method,
       params: params

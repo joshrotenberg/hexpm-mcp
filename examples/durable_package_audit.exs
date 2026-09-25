@@ -18,7 +18,7 @@ end
 
 defmodule DurablePackageAuditExample.Executor do
   @moduledoc false
-  @behaviour MCP.Extensions.Tasks.WorkExecutor
+  @behaviour Snodo.Extensions.Tasks.WorkExecutor
 
   @impl true
   def execute(work, cancellation, owner) do
@@ -38,9 +38,9 @@ defmodule DurablePackageAuditExample do
 
   alias HexpmMcp.AuditWorkflow
   alias HexpmMcp.AuditWorkflow.Repo
-  alias MCP.Extensions.Tasks
-  alias MCP.Extensions.Tasks.Work
-  alias MCP.Subscription
+  alias Snodo.Extensions.Tasks
+  alias Snodo.Extensions.Tasks.Work
+  alias Snodo.Subscription
 
   def run(mode) do
     directory =
@@ -159,7 +159,7 @@ defmodule DurablePackageAuditExample do
   end
 
   defp dispatch(runtime, method, params) do
-    MCP.Test.dispatch(runtime,
+    Snodo.Test.dispatch(runtime,
       protocol: "2026-07-28",
       method: method,
       params: params,

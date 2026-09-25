@@ -9,9 +9,9 @@ defmodule HexpmMcp.MCP.PackageCompletion do
   """
 
   alias HexpmMcp.Client
-  alias MCP.Result
+  alias Snodo.Result
 
-  @spec complete(String.t()) :: {:ok, Result.t()} | {:error, MCP.Error.t()}
+  @spec complete(String.t()) :: {:ok, Result.t()} | {:error, Snodo.Error.t()}
   def complete(prefix) do
     if byte_size(prefix) in 2..64 and Regex.match?(~r/\A[a-z0-9_]+\z/, prefix) do
       fetch(prefix)
@@ -34,7 +34,7 @@ defmodule HexpmMcp.MCP.PackageCompletion do
         {:ok, Result.completion(names, has_more: length(packages) >= 100)}
 
       {:error, _reason} ->
-        {:error, MCP.Error.internal("Package suggestions are temporarily unavailable")}
+        {:error, Snodo.Error.internal("Package suggestions are temporarily unavailable")}
     end
   end
 end

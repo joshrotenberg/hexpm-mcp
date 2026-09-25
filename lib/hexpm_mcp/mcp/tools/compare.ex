@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.Compare do
   Compare 2-5 hex.pm packages side by side.
   """
 
-  use MCP.Tool.Simple, name: "compare", description: "Compare 2-5 packages side by side"
+  use Snodo.Tool.Simple, name: "compare", description: "Compare 2-5 packages side by side"
 
   alias HexpmMcp.Formatter
 
@@ -22,13 +22,13 @@ defmodule HexpmMcp.MCP.Tools.Compare do
 
     case HexpmMcp.compare_packages(names) do
       {:ok, packages} ->
-        {:ok, MCP.Result.text(Formatter.format_comparison(packages))}
+        {:ok, Snodo.Result.text(Formatter.format_comparison(packages))}
 
       {:error, :too_few_packages} ->
-        {:ok, MCP.Result.error("Please provide at least 2 package names.")}
+        {:ok, Snodo.Result.error("Please provide at least 2 package names.")}
 
       {:error, :too_many_packages} ->
-        {:ok, MCP.Result.error("Please provide at most 5 package names.")}
+        {:ok, Snodo.Result.error("Please provide at most 5 package names.")}
     end
   end
 end

@@ -3,7 +3,9 @@ defmodule HexpmMcp.MCP.Tools.AuditMixDeps do
   Audit mix.exs dependencies for risks.
   """
 
-  use MCP.Tool.Simple, name: "audit_mix_deps", description: "Audit mix.exs dependencies for risks"
+  use Snodo.Tool.Simple,
+    name: "audit_mix_deps",
+    description: "Audit mix.exs dependencies for risks"
 
   alias HexpmMcp.Formatter
 
@@ -16,10 +18,10 @@ defmodule HexpmMcp.MCP.Tools.AuditMixDeps do
   def call(%{"deps" => deps}, _context) do
     case HexpmMcp.audit_mix_deps(deps) do
       {:ok, audit} ->
-        {:ok, MCP.Result.text(Formatter.format_mix_audit(audit))}
+        {:ok, Snodo.Result.text(Formatter.format_mix_audit(audit))}
 
       {:error, :no_deps_found} ->
-        {:ok, MCP.Result.error("No dependencies found in the provided text.")}
+        {:ok, Snodo.Result.error("No dependencies found in the provided text.")}
     end
   end
 end

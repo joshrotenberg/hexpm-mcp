@@ -1,11 +1,11 @@
 defmodule HexpmMcp.AuditWorkflow.Executor do
   @moduledoc "Restartable read-only audit execution through the existing application domain path."
-  @behaviour MCP.Extensions.Tasks.WorkExecutor
+  @behaviour Snodo.Extensions.Tasks.WorkExecutor
 
   alias HexpmMcp.AuditWorkflow.Tool
-  alias MCP.Cancellation
-  alias MCP.Error
-  alias MCP.Extensions.Tasks.Work
+  alias Snodo.Cancellation
+  alias Snodo.Error
+  alias Snodo.Extensions.Tasks.Work
 
   @limitations [
     "Completed means a report was produced, not a safe-package verdict.",
@@ -40,7 +40,7 @@ defmodule HexpmMcp.AuditWorkflow.Executor do
         "collectionFinishedAt" => DateTime.utc_now() |> DateTime.to_iso8601(),
         "sources" => ["Hex release/package/owner metadata", "OSV package-name advisory query"],
         "limitations" => @limitations,
-        "observations" => MCP.JSONValue.encodable!(audit)
+        "observations" => Snodo.JSONValue.encodable!(audit)
       }
 
       {:completed,

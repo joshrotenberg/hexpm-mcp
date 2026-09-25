@@ -13,7 +13,7 @@ defmodule HexpmMcp.MCP.StdioLifecycle do
 
   use Task, restart: :temporary
 
-  alias MCP.Transport.Stdio
+  alias Snodo.Transport.Stdio
 
   @spec start_link(keyword()) :: {:ok, pid()}
   def start_link(opts) do

@@ -1,13 +1,13 @@
 defmodule HexpmMcp.AuditWorkflow.Tool do
   @moduledoc "Exact-version audit descriptor admission; executions belong to the durable executor."
-  use MCP.Tool.Simple,
+  use Snodo.Tool.Simple,
     name: "durable_package_audit",
     description:
       "Produce a durable advisory report for a package release; requires Tasks support.",
     additional_properties: false
 
   alias HexpmMcp.AuditWorkflow.Store
-  alias MCP.Error
+  alias Snodo.Error
 
   argument("name", :string,
     required: true,

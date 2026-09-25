@@ -1,7 +1,7 @@
 defmodule HexpmMcp.MCP.Resources.PackageInfo do
   @moduledoc "Get package metadata from hex.pm"
 
-  use MCP.Resource.Simple,
+  use Snodo.Resource.Simple,
     name: "package_info",
     description: "Get package metadata from hex.pm",
     uri_template: "hex://{name}/info",
@@ -12,7 +12,7 @@ defmodule HexpmMcp.MCP.Resources.PackageInfo do
   alias HexpmMcp.MCP.PackageCompletion
 
   @impl true
-  def complete(%MCP.Completion{argument: "name", value: prefix}, _context) do
+  def complete(%Snodo.Completion{argument: "name", value: prefix}, _context) do
     PackageCompletion.complete(prefix)
   end
 
@@ -32,13 +32,13 @@ defmodule HexpmMcp.MCP.Resources.PackageInfo do
           updated_at: pkg.updated_at
         }
 
-        {:ok, MCP.JSONValue.encodable!(data)}
+        {:ok, Snodo.JSONValue.encodable!(data)}
 
       {:error, :not_found} ->
-        {:error, MCP.Error.invalid_params("Resource not found", %{"uri" => uri})}
+        {:error, Snodo.Error.invalid_params("Resource not found", %{"uri" => uri})}
 
       {:error, reason} ->
-        {:error, MCP.Error.execution("Package not found: #{inspect(reason)}")}
+        {:error, Snodo.Error.execution("Package not found: #{inspect(reason)}")}
     end
   end
 end

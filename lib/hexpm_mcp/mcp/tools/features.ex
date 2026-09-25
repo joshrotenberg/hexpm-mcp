@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.Features do
   Get optional features/extras for a package release.
   """
 
-  use MCP.Tool.Simple,
+  use Snodo.Tool.Simple,
     name: "features",
     description: "Get optional features for a package release"
 
@@ -18,13 +18,13 @@ defmodule HexpmMcp.MCP.Tools.Features do
 
     case HexpmMcp.get_features(name, version) do
       {:ok, data} ->
-        {:ok, MCP.Result.text(Formatter.format_features(data))}
+        {:ok, Snodo.Result.text(Formatter.format_features(data))}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("Package '#{name}' not found.")}
+        {:ok, Snodo.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to get features: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to get features: #{inspect(reason)}")}
     end
   end
 end

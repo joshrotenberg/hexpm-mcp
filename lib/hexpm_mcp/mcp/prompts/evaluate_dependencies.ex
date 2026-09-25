@@ -1,7 +1,7 @@
 defmodule HexpmMcp.MCP.Prompts.EvaluateDependencies do
   @moduledoc "Evaluate a set of hex.pm dependencies for health and security"
 
-  use MCP.Prompt.Simple,
+  use Snodo.Prompt.Simple,
     name: "evaluate_dependencies",
     description: "Evaluate a set of hex.pm dependencies for health and security"
 

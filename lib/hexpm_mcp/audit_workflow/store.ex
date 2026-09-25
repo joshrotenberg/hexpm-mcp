@@ -1,9 +1,9 @@
 defmodule HexpmMcp.AuditWorkflow.Store do
   @moduledoc "Authenticated tenant admission around the public SQLite Tasks store contract."
-  @behaviour MCP.Extensions.Tasks.Store
+  @behaviour Snodo.Extensions.Tasks.Store
 
-  alias MCP.Context
-  alias MCP.Extensions.Tasks.Store.SQLite
+  alias Snodo.Context
+  alias Snodo.Extensions.Tasks.Store.SQLite
 
   @doc "Only trusted transport auth identifies the tenant; absent/blank tenants are rejected."
   def authenticated?(%Context{auth: %{"tenant" => tenant}}),

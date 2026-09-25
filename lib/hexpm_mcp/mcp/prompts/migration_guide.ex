@@ -1,7 +1,7 @@
 defmodule HexpmMcp.MCP.Prompts.MigrationGuide do
   @moduledoc "Guide for migrating from one hex.pm package to another"
 
-  use MCP.Prompt.Simple,
+  use Snodo.Prompt.Simple,
     name: "migration_guide",
     description: "Guide a migration from one hex.pm package to another"
 

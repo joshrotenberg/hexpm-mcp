@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Prompts.AnalyzePackage do
 
   alias HexpmMcp.MCP.PackageCompletion
 
-  use MCP.Prompt.Simple,
+  use Snodo.Prompt.Simple,
     name: "analyze_package",
     description:
       "Comprehensive analysis of a package's quality, maintenance, popularity, and alternatives",
@@ -12,7 +12,7 @@ defmodule HexpmMcp.MCP.Prompts.AnalyzePackage do
   argument("name", description: "Package name on hex.pm", required: true)
 
   @impl true
-  def complete(%MCP.Completion{argument: "name", value: prefix}, _context) do
+  def complete(%Snodo.Completion{argument: "name", value: prefix}, _context) do
     PackageCompletion.complete(prefix)
   end
 

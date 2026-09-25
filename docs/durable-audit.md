@@ -83,16 +83,16 @@ create a persisted descriptor before validation. Clients without Tasks support
 receive the extension's missing-capability error.
 
 Every workflow request needs trusted auth shaped as
-`%{"tenant" => "verified-tenant-id"}` in `MCP.Context.auth`. Missing or blank
+`%{"tenant" => "verified-tenant-id"}` in `Snodo.Context.auth`. Missing or blank
 tenants are rejected. Tool arguments, JSON `_meta` and unchecked headers never
 select a tenant. Get, update, cancellation and subscription reads use the same
 store authorization boundary; another tenant cannot read or cancel the task.
 This isolates tenants, not separate principals within the same tenant.
 
-Authenticated HTTP acceptance uses the optional `mcp_ex_plug` integration with
+Authenticated HTTP acceptance uses the optional `snodo_plug` integration with
 Bandit. A test-owned authentication Plug verifies an ephemeral bearer credential,
 then sets `Plug.Conn.assign(conn, :mcp_auth, %{"tenant" => verified_tenant})`
-before calling `MCP.Transport.Plug`. It checks unauthenticated rejection,
+before calling `Snodo.Transport.Plug`. It checks unauthenticated rejection,
 cross-tenant denial, real SSE delivery and disconnect cleanup. Those Plug and
 Bandit dependencies are currently **development/test only**; this is not a
 production authentication policy, OAuth implementation or default HTTP-server

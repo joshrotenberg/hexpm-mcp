@@ -3,7 +3,7 @@ defmodule HexpmMcp.MCP.Tools.ToolboxCategory do
   List the curated projects in an Elixir Toolbox category.
   """
 
-  use MCP.Tool.Simple,
+  use Snodo.Tool.Simple,
     name: "toolbox_category",
     description: "List projects in a Toolbox category"
 
@@ -27,13 +27,13 @@ defmodule HexpmMcp.MCP.Tools.ToolboxCategory do
 
     case HexpmMcp.toolbox_category(group, category, opts) do
       {:ok, projects} ->
-        {:ok, MCP.Result.text(Formatter.format_toolbox_category(group, category, projects))}
+        {:ok, Snodo.Result.text(Formatter.format_toolbox_category(group, category, projects))}
 
       {:error, :not_found} ->
-        {:ok, MCP.Result.error("Category not found: #{group}/#{category}")}
+        {:ok, Snodo.Result.error("Category not found: #{group}/#{category}")}
 
       {:error, reason} ->
-        {:ok, MCP.Result.error("Failed to fetch category projects: #{inspect(reason)}")}
+        {:ok, Snodo.Result.error("Failed to fetch category projects: #{inspect(reason)}")}
     end
   end
 
