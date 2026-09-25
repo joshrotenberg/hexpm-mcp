@@ -1,7 +1,7 @@
 defmodule HexpmMcp.MCP.Resources.PackageDocs do
   @moduledoc "Get documentation module listing for a hex.pm package"
 
-  use MCP.Resource,
+  use MCP.Resource.Simple,
     name: "package_docs",
     description: "Get documentation module listing for a hex.pm package",
     uri_template: "hex://{name}/docs",
@@ -13,7 +13,7 @@ defmodule HexpmMcp.MCP.Resources.PackageDocs do
   def read(%{"uri" => uri, "name" => pkg_name}, _context) do
     case HexDocs.get_modules(pkg_name) do
       {:ok, modules} ->
-        {:ok, MCP.Result.resource_read(MCP.Resource.json(uri, MCP.JSONValue.encodable!(modules)))}
+        {:ok, MCP.JSONValue.encodable!(modules)}
 
       {:error, :not_found} ->
         {:error, MCP.Error.invalid_params("Resource not found", %{"uri" => uri})}
