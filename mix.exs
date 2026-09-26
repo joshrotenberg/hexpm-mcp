@@ -7,7 +7,7 @@ defmodule HexpmMcp.MixProject do
     [
       app: :hexpm_mcp,
       version: "0.3.7",
-      elixir: "~> 1.17",
+      elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -66,8 +66,10 @@ defmodule HexpmMcp.MixProject do
 
   defp deps do
     [
-      {:anubis_mcp, "~> 1.0"},
-      {:bandit, "~> 1.0"},
+      # Held to 0.2.x: before 1.0, snodo's minor versions carry breaking
+      # changes. SNODO_PATH=../snodo uses a local checkout for both packages.
+      snodo_dep(:snodo, "."),
+      snodo_dep(:snodo_jsv, "integrations/schema_jsv", optional: true),
       # 0.2.1 for Cheer.parse/3 and Cheer.argv/0; 0.2.0 has neither.
       dep(:cheer, "~> 0.2.1", "CHEER_PATH"),
       # 0.2.22 threads the release tag into `tinfoil.build`. Before it, the
@@ -96,9 +98,7 @@ defmodule HexpmMcp.MixProject do
     ]
   end
 
-  # Resolve a dependency against a local checkout when the given env var is set,
-  # and against Hex otherwise. Lets cheer and tinfoil be co-developed alongside
-  # this project without committing path deps:
+  # Resolve a dependency against a local checkout when the given env var is set.
   #
   #     CHEER_PATH=../cheer mix deps.get
   #
@@ -106,6 +106,17 @@ defmodule HexpmMcp.MixProject do
     case System.get_env(env_var) do
       nil -> {app, requirement, opts}
       path -> {app, [path: path] ++ opts}
+    end
+  end
+
+  # snodo and snodo_jsv are released together, so one checkout serves both.
+  #
+  #     SNODO_PATH=../snodo mix deps.get
+  #
+  defp snodo_dep(app, subdir, opts \\ []) do
+    case System.get_env("SNODO_PATH") do
+      nil -> {app, "~> 0.2.0", opts}
+      root -> {app, [path: Path.join(root, subdir)] ++ opts}
     end
   end
 

@@ -3,36 +3,31 @@ defmodule HexpmMcp.MCP.Tools.Search do
   Search for packages on hex.pm by name/keywords.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use Snodo.Tool.Simple, name: "search", description: "Search hex.pm packages"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:query, :string, required: true, description: "Search query string")
+  argument("query", :string, required: true, description: "Search query string")
 
-    field(:sort, :string,
-      description: "Sort by: name, recent_downloads, total_downloads, inserted_at, updated_at"
-    )
+  argument("sort", :string,
+    description: "Sort by: name, recent_downloads, total_downloads, inserted_at, updated_at"
+  )
 
-    field(:page, :integer, description: "Page number (default 1)")
-  end
+  argument("page", :integer, description: "Page number (default 1)")
 
   @impl true
-  def execute(%{query: query} = args, frame) do
+  def call(%{"query" => query} = args, _context) do
     opts =
       []
-      |> maybe_put(:sort, Map.get(args, :sort))
-      |> maybe_put(:page, Map.get(args, :page))
+      |> maybe_put(:sort, Map.get(args, "sort"))
+      |> maybe_put(:page, Map.get(args, "page"))
 
     case HexpmMcp.search(query, opts) do
       {:ok, results} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_search_results(query, results)),
-         frame}
+        {:ok, Snodo.Result.text(Formatter.format_search_results(query, results))}
 
       {:error, reason} ->
-        {:error, Error.execution("Search failed: #{inspect(reason)}"), frame}
+        {:ok, Snodo.Result.error("Search failed: #{inspect(reason)}")}
     end
   end
 

@@ -1,0 +1,442 @@
+[
+  {
+    "description": "Find alternative packages",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "alternatives"
+  },
+  {
+    "description": "Audit package dependencies for risks",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        },
+        "version": {
+          "description": "Release version (defaults to latest)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "audit"
+  },
+  {
+    "description": "Audit mix.exs dependencies for risks",
+    "inputSchema": {
+      "properties": {
+        "deps": {
+          "description": "Mix.exs deps list as text, e.g. {:phoenix, \"~> 1.7\"}, {:ecto, \"~> 3.10\"}",
+          "type": "string"
+        }
+      },
+      "required": [
+        "deps"
+      ],
+      "type": "object"
+    },
+    "name": "audit_mix_deps"
+  },
+  {
+    "description": "Compare 2-5 packages side by side",
+    "inputSchema": {
+      "properties": {
+        "packages": {
+          "description": "Comma-separated list of package names (2-5 packages)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "packages"
+      ],
+      "type": "object"
+    },
+    "name": "compare"
+  },
+  {
+    "description": "Build a package dependency tree",
+    "inputSchema": {
+      "properties": {
+        "max_depth": {
+          "description": "Maximum depth to traverse (default 5, max 5)",
+          "type": "integer"
+        },
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        },
+        "version": {
+          "description": "Release version (defaults to latest)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "dep_tree"
+  },
+  {
+    "description": "Get dependencies for a package version",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        },
+        "version": {
+          "description": "Release version (defaults to latest)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "dependencies"
+  },
+  {
+    "description": "Get documentation for a module or function",
+    "inputSchema": {
+      "properties": {
+        "module": {
+          "description": "Module name (e.g. \"Plug.Conn\")",
+          "type": "string"
+        },
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        },
+        "version": {
+          "description": "Package version (defaults to latest)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "module"
+      ],
+      "type": "object"
+    },
+    "name": "doc_item"
+  },
+  {
+    "description": "Browse a package documentation module listing",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        },
+        "version": {
+          "description": "Package version (defaults to latest)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "docs"
+  },
+  {
+    "description": "Get package download statistics",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "downloads"
+  },
+  {
+    "description": "Get optional features for a package release",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        },
+        "version": {
+          "description": "Release version (defaults to latest)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "features"
+  },
+  {
+    "description": "Run a comprehensive package health check",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "health"
+  },
+  {
+    "description": "Get detailed package information",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "info"
+  },
+  {
+    "description": "Get package owners and maintainers",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "owners"
+  },
+  {
+    "description": "Get package README content",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        },
+        "version": {
+          "description": "Package version (defaults to latest)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "readme"
+  },
+  {
+    "description": "Get detailed package release information",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        },
+        "version": {
+          "description": "Release version (e.g. \"1.8.5\")",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "type": "object"
+    },
+    "name": "release"
+  },
+  {
+    "description": "Search hex.pm packages",
+    "inputSchema": {
+      "properties": {
+        "page": {
+          "description": "Page number (default 1)",
+          "type": "integer"
+        },
+        "query": {
+          "description": "Search query string",
+          "type": "string"
+        },
+        "sort": {
+          "description": "Sort by: name, recent_downloads, total_downloads, inserted_at, updated_at",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "type": "object"
+    },
+    "name": "search"
+  },
+  {
+    "description": "Search within package documentation",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        },
+        "query": {
+          "description": "Search query",
+          "type": "string"
+        },
+        "version": {
+          "description": "Package version (defaults to latest)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "query"
+      ],
+      "type": "object"
+    },
+    "name": "search_docs"
+  },
+  {
+    "description": "List projects in a Toolbox category",
+    "inputSchema": {
+      "properties": {
+        "category": {
+          "description": "Category slug within the group (e.g. \"frameworks\")",
+          "type": "string"
+        },
+        "group": {
+          "description": "Group slug (e.g. \"web\", \"ai\")",
+          "type": "string"
+        },
+        "sort": {
+          "description": "Ordering: \"name\" (alphabetical) or \"downloads\"; defaults to popularity order",
+          "type": "string"
+        }
+      },
+      "required": [
+        "group",
+        "category"
+      ],
+      "type": "object"
+    },
+    "name": "toolbox_category"
+  },
+  {
+    "description": "List categories in a Toolbox group",
+    "inputSchema": {
+      "properties": {
+        "group": {
+          "description": "Group slug (e.g. \"web\", \"ai\")",
+          "type": "string"
+        }
+      },
+      "required": [
+        "group"
+      ],
+      "type": "object"
+    },
+    "name": "toolbox_group"
+  },
+  {
+    "description": "Browse the Elixir Toolbox taxonomy",
+    "inputSchema": {
+      "type": "object"
+    },
+    "name": "toolbox_groups"
+  },
+  {
+    "description": "Search packages through Elixir Toolbox",
+    "inputSchema": {
+      "properties": {
+        "query": {
+          "description": "Search query string",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "type": "object"
+    },
+    "name": "toolbox_search"
+  },
+  {
+    "description": "List trending Elixir packages",
+    "inputSchema": {
+      "properties": {
+        "limit": {
+          "description": "Maximum number of projects to return",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "name": "toolbox_trending"
+  },
+  {
+    "description": "Check mix.exs dependencies for upgrades",
+    "inputSchema": {
+      "properties": {
+        "deps": {
+          "description": "Mix.exs deps list as text, e.g. {:phoenix, \"~> 1.7\"}, {:ecto, \"~> 3.10\"}",
+          "type": "string"
+        }
+      },
+      "required": [
+        "deps"
+      ],
+      "type": "object"
+    },
+    "name": "upgrade_check"
+  },
+  {
+    "description": "List all package versions",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Package name on hex.pm",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "versions"
+  }
+]

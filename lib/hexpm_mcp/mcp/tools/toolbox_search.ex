@@ -4,25 +4,22 @@ defmodule HexpmMcp.MCP.Tools.ToolboxSearch do
   popularity, and health signals not exposed by the raw hex.pm search.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use Snodo.Tool.Simple,
+    name: "toolbox_search",
+    description: "Search packages through Elixir Toolbox"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:query, :string, required: true, description: "Search query string")
-  end
+  argument("query", :string, required: true, description: "Search query string")
 
   @impl true
-  def execute(%{query: query}, frame) do
+  def call(%{"query" => query}, _context) do
     case HexpmMcp.toolbox_search(query) do
       {:ok, results} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_toolbox_search(query, results)),
-         frame}
+        {:ok, Snodo.Result.text(Formatter.format_toolbox_search(query, results))}
 
       {:error, reason} ->
-        {:error, Error.execution("Search failed: #{inspect(reason)}"), frame}
+        {:ok, Snodo.Result.error("Search failed: #{inspect(reason)}")}
     end
   end
 end

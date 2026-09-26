@@ -51,19 +51,18 @@ jobs:
           for attempt in $(seq 1 $MAX_RETRIES); do
             echo "=== Attempt $attempt of $MAX_RETRIES ==="
 
-            echo "Sending initialize request..."
-            INIT_RESPONSE=$(curl -s -D /tmp/headers.txt -X POST "$MCP_URL" \
+            echo "Sending server discovery request..."
+            DISCOVERY_RESPONSE=$(curl -s -X POST "$MCP_URL" \
               -H "Content-Type: application/json" \
-              -H "Accept: application/json" \
-              -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"deploy-check","version":"1.0"}}}')
+              -H "Accept: application/json, text/event-stream" \
+              -H "MCP-Protocol-Version: 2026-07-28" \
+              -H "Mcp-Method: server/discover" \
+              -d '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}')
 
-            echo "Init response: $INIT_RESPONSE"
+            echo "Discovery response: $DISCOVERY_RESPONSE"
 
-            SESSION_ID=$(grep -i "mcp-session-id" /tmp/headers.txt | cut -d' ' -f2 | tr -d '\r')
-            echo "Session ID: $SESSION_ID"
-
-            if [ -z "$SESSION_ID" ]; then
-              echo "Failed to get session ID"
+            if ! echo "$DISCOVERY_RESPONSE" | grep -q '"supportedVersions".*"2026-07-28"'; then
+              echo "MCP discovery failed"
               if [ $attempt -lt $MAX_RETRIES ]; then
                 echo "Retrying in ${RETRY_DELAY}s..."
                 sleep $RETRY_DELAY
@@ -72,23 +71,14 @@ jobs:
               exit 1
             fi
 
-            sleep 3
-
-            echo "Sending initialized notification..."
-            curl -s -X POST "$MCP_URL" \
-              -H "Content-Type: application/json" \
-              -H "Accept: application/json" \
-              -H "MCP-Session-Id: $SESSION_ID" \
-              -d '{"jsonrpc":"2.0","method":"notifications/initialized"}'
-
-            sleep 3
-
             echo "Sending test tool call..."
             TOOL_RESPONSE=$(curl -s -X POST "$MCP_URL" \
               -H "Content-Type: application/json" \
-              -H "Accept: application/json" \
-              -H "MCP-Session-Id: $SESSION_ID" \
-              -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search","arguments":{"query":"phoenix"}}}')
+              -H "Accept: application/json, text/event-stream" \
+              -H "MCP-Protocol-Version: 2026-07-28" \
+              -H "Mcp-Method: tools/call" \
+              -H "Mcp-Name: search" \
+              -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search","arguments":{"query":"phoenix"},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}')
 
             echo "Tool response: $TOOL_RESPONSE"
 

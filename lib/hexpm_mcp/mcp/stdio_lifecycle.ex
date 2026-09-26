@@ -1,66 +1,44 @@
 defmodule HexpmMcp.MCP.StdioLifecycle do
   @moduledoc """
-  Halts the VM cleanly when a stdio client disconnects.
+  Serves the CLI's stdio connection and exits with its transport outcome.
 
-  Anubis stops its stdio transport with `:normal` on EOF, which is the correct
-  reading of "the client went away". But the transport is a permanent child, so
-  the supervisor restarts it, the new transport reads EOF immediately, and the
-  cycle repeats until the restart intensity is exceeded. The supervisor then
-  gives up, the application exits, and because releases are built with
-  `start_permanent: true` a terminating permanent application takes the node
-  down abnormally: exit status 1 and an `erl_crash.dump` on disk.
+  The serving task owns the transport lifecycle through `Stdio.serve/2`,
+  which installs its monitor before starting input. Immediate EOF therefore
+  cannot race a separately started lifecycle monitor. EOF waits for admitted
+  requests to finish before a clean exit.
 
-  An MCP client reads that as the server having crashed on every ordinary
-  disconnect. This process monitors the transport and turns the first clean stop
-  into `System.halt(0)`, ahead of the restart storm.
-
-  Only an orderly stop is treated this way. A transport that dies for any other
-  reason is left to the supervisor, so real failures still restart and still
-  surface.
+  Transport failures are reported to stderr and exit with status 1. A consumed
+  stdio stream cannot be reconnected by restarting a supervised child.
   """
 
-  use GenServer
+  use Task, restart: :temporary
 
-  alias Anubis.Server.Registry
+  alias Snodo.Transport.Stdio
 
-  require Logger
-
-  @spec start_link(keyword()) :: GenServer.on_start()
+  @spec start_link(keyword()) :: {:ok, pid()}
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+    Task.start_link(__MODULE__, :serve_and_halt, [opts])
   end
 
-  @impl true
-  def init(opts) do
-    {:ok, %{server: Keyword.get(opts, :server, HexpmMcp.MCP.Server)}, {:continue, :monitor}}
-  end
+  @doc false
+  @spec serve_and_halt(keyword()) :: no_return()
+  def serve_and_halt(opts) do
+    result =
+      try do
+        runtime = Keyword.fetch!(opts, :runtime)
+        Stdio.serve(runtime, Keyword.delete(opts, :runtime))
+      catch
+        kind, reason -> {:error, Exception.format(kind, reason, __STACKTRACE__)}
+      end
 
-  @impl true
-  def handle_continue(:monitor, state) do
-    # This process starts after the MCP server, so the transport is already
-    # registered. If it somehow is not, there is nothing to watch and no reason
-    # to hold up boot.
-    case GenServer.whereis(Registry.transport_name(state.server, :stdio)) do
-      nil ->
-        Logger.warning("stdio transport not registered; client disconnect will not halt cleanly")
-        {:noreply, state}
+    case result do
+      :ok ->
+        System.halt(0)
 
-      pid ->
-        Process.monitor(pid)
-        {:noreply, state}
+      {:error, reason} ->
+        message = if is_binary(reason), do: reason, else: inspect(reason)
+        IO.puts(:stderr, "hexpm-mcp stdio failed: #{message}")
+        System.halt(1)
     end
   end
-
-  @impl true
-  def handle_info({:DOWN, _ref, :process, _pid, reason}, state)
-      when reason in [:normal, :shutdown] do
-    System.halt(0)
-    {:noreply, state}
-  end
-
-  def handle_info({:DOWN, _ref, :process, _pid, _reason}, state) do
-    {:noreply, state}
-  end
-
-  def handle_info(_msg, state), do: {:noreply, state}
 end

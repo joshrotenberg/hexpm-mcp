@@ -3,35 +3,27 @@ defmodule HexpmMcp.MCP.Tools.SearchDocs do
   Search within a package's documentation by name.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use Snodo.Tool.Simple, name: "search_docs", description: "Search within package documentation"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:name, :string, required: true, description: "Package name on hex.pm")
-    field(:query, :string, required: true, description: "Search query")
-    field(:version, :string, description: "Package version (defaults to latest)")
-  end
+  argument("name", :string, required: true, description: "Package name on hex.pm")
+  argument("query", :string, required: true, description: "Search query")
+  argument("version", :string, description: "Package version (defaults to latest)")
 
   @impl true
-  def execute(%{name: name, query: query} = args, frame) do
-    version = Map.get(args, :version)
+  def call(%{"name" => name, "query" => query} = args, _context) do
+    version = Map.get(args, "version")
 
     case HexpmMcp.search_docs(name, query, version) do
       {:ok, results} when results != [] ->
-        {:reply,
-         Response.text(Response.tool(), Formatter.format_search_docs(name, query, results)),
-         frame}
+        {:ok, Snodo.Result.text(Formatter.format_search_docs(name, query, results))}
 
       {:ok, []} ->
-        {:reply,
-         Response.text(Response.tool(), "No results found for '#{query}' in #{name} docs."),
-         frame}
+        {:ok, Snodo.Result.text("No results found for '#{query}' in #{name} docs.")}
 
       {:error, reason} ->
-        {:error, Error.execution("Doc search failed: #{inspect(reason)}"), frame}
+        {:ok, Snodo.Result.error("Doc search failed: #{inspect(reason)}")}
     end
   end
 end

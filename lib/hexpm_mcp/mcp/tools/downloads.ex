@@ -3,27 +3,23 @@ defmodule HexpmMcp.MCP.Tools.Downloads do
   Get download statistics for a hex.pm package.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use Snodo.Tool.Simple, name: "downloads", description: "Get package download statistics"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:name, :string, required: true, description: "Package name on hex.pm")
-  end
+  argument("name", :string, required: true, description: "Package name on hex.pm")
 
   @impl true
-  def execute(%{name: name}, frame) do
+  def call(%{"name" => name}, _context) do
     case HexpmMcp.get_downloads(name) do
       {:ok, data} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_downloads(data)), frame}
+        {:ok, Snodo.Result.text(Formatter.format_downloads(data))}
 
       {:error, :not_found} ->
-        {:reply, Response.text(Response.tool(), "Package '#{name}' not found."), frame}
+        {:ok, Snodo.Result.error("Package '#{name}' not found.")}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to get downloads: #{inspect(reason)}"), frame}
+        {:ok, Snodo.Result.error("Failed to get downloads: #{inspect(reason)}")}
     end
   end
 end

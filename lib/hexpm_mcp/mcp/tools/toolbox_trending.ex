@@ -3,27 +3,22 @@ defmodule HexpmMcp.MCP.Tools.ToolboxTrending do
   List trending Elixir packages from Elixir Toolbox.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use Snodo.Tool.Simple, name: "toolbox_trending", description: "List trending Elixir packages"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:limit, :integer, description: "Maximum number of projects to return")
-  end
+  argument("limit", :integer, description: "Maximum number of projects to return")
 
   @impl true
-  def execute(args, frame) do
-    opts = maybe_put([], :limit, Map.get(args, :limit))
+  def call(args, _context) do
+    opts = maybe_put([], :limit, Map.get(args, "limit"))
 
     case HexpmMcp.toolbox_trending(opts) do
       {:ok, projects} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_toolbox_trending(projects)),
-         frame}
+        {:ok, Snodo.Result.text(Formatter.format_toolbox_trending(projects))}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to fetch trending: #{inspect(reason)}"), frame}
+        {:ok, Snodo.Result.error("Failed to fetch trending: #{inspect(reason)}")}
     end
   end
 

@@ -3,27 +3,23 @@ defmodule HexpmMcp.MCP.Tools.ToolboxGroup do
   List the categories in a single Elixir Toolbox group.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use Snodo.Tool.Simple, name: "toolbox_group", description: "List categories in a Toolbox group"
 
-  alias Anubis.MCP.Error
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:group, :string, required: true, description: "Group slug (e.g. \"web\", \"ai\")")
-  end
+  argument("group", :string, required: true, description: "Group slug (e.g. \"web\", \"ai\")")
 
   @impl true
-  def execute(%{group: group}, frame) do
+  def call(%{"group" => group}, _context) do
     case HexpmMcp.toolbox_group(group) do
       {:ok, data} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_toolbox_group(data)), frame}
+        {:ok, Snodo.Result.text(Formatter.format_toolbox_group(data))}
 
       {:error, :not_found} ->
-        {:error, Error.execution("Group not found: #{group}"), frame}
+        {:ok, Snodo.Result.error("Group not found: #{group}")}
 
       {:error, reason} ->
-        {:error, Error.execution("Failed to fetch group: #{inspect(reason)}"), frame}
+        {:ok, Snodo.Result.error("Failed to fetch group: #{inspect(reason)}")}
     end
   end
 end

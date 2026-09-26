@@ -3,13 +3,21 @@
 [![CI](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/joshrotenberg/hexpm-mcp/actions/workflows/ci.yml)
 [![Hex.pm](https://img.shields.io/hexpm/v/hexpm_mcp.svg)](https://hex.pm/packages/hexpm_mcp)
 [![Docs](https://img.shields.io/badge/hexdocs-docs-purple.svg)](https://hexdocs.pm/hexpm_mcp)
-![Elixir](https://img.shields.io/badge/Elixir-1.17%2B-blueviolet)
+![Elixir](https://img.shields.io/badge/Elixir-1.18%2B-blueviolet)
 ![OTP](https://img.shields.io/badge/OTP-28-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 MCP server for querying [hex.pm](https://hex.pm) and [hexdocs.pm](https://hexdocs.pm) -- the Elixir/Erlang package registry and documentation hosting.
 
-Built with [Anubis MCP](https://hex.pm/packages/anubis_mcp) + [Bandit](https://hex.pm/packages/bandit) in Elixir.
+Built with [snodo](https://github.com/joshrotenberg/snodo). It speaks MCP
+`2026-07-28` over stdio and Streamable HTTP, so clients need to support that
+revision.
+
+It provides 24 tools, six prompts, and package resources. Tool arguments are
+validated against their JSON Schemas, lists come in pages of eight with cache
+hints, and prompt and resource arguments complete package names. The
+`package_review` prompt asks for its `focus` (quality, security, or upgrade)
+when the argument is omitted and the client supports elicitation.
 
 ## Quick Start
 
@@ -363,7 +371,7 @@ iex / Elixir code                 MCP clients
    returns {:ok, map}                  |
         |                         calls HexpmMcp API
    Client / HexDocs / OSV /      then Formatter -> markdown
-   Toolbox (internal clients)    then Response.text()
+   Toolbox (internal clients)    then Snodo.Result.text()
 ```
 
 - **`HexpmMcp`** -- 25 public functions returning structured maps, usable from iex
@@ -374,10 +382,30 @@ iex / Elixir code                 MCP clients
 - **`HexpmMcp.Toolbox`** -- Elixir Toolbox client for curated package discovery
 - **`HexpmMcp.Cache`** -- ETS-based response cache with TTL and periodic sweeping
 - **`HexpmMcp.CLI`** -- Cheer command tree; turns argv into the server's configuration
-- **`HexpmMcp.MCP.StdioLifecycle`** -- exits 0 when a stdio client disconnects
-- **MCP Tools** -- thin wrappers calling the public API, registered via Anubis Server Components
+- **`HexpmMcp.MCP.StdioLifecycle`** -- owns the stdio serving Task, drains requests
+  on EOF, exits 0 on orderly disconnect, and reports transport failures with exit 1
+- **MCP Tools, Resources, and Prompts** -- thin, JSON-shaped protocol components registered with `Snodo.Server`
 
 ## Development
+
+`snodo` and `snodo_jsv` come from Hex. To build against a local snodo checkout,
+set `SNODO_PATH`, for example `SNODO_PATH=../snodo mix deps.get`.
+
+`test/fixtures/mcp_tool_catalog.json` holds the tool catalog, and the tests check
+the tool definitions against it. The acceptance tests seed domain data and
+exercise resources, tool failures, and argument validation through direct
+dispatch, stdio, and HTTP.
+
+snodo's check with the official TypeScript client also runs against this
+server, over stdio and HTTP, with seeded domain responses. It needs a snodo
+checkout at `../snodo`. Install its pinned Node dependencies once with
+`npm ci --ignore-scripts` in `snodo/interop/official_client`, then:
+
+```sh
+MIX_ENV=test mix compile --warnings-as-errors
+cd ../snodo
+HEXPM_MCP_BUILD_PATH=../hexpm-mcp/_build/test node interop/official_client/check_hexpm.mjs
+```
 
 ```bash
 # Install dependencies

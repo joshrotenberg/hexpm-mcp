@@ -3,27 +3,25 @@ defmodule HexpmMcp.MCP.Tools.AuditMixDeps do
   Audit mix.exs dependencies for risks.
   """
 
-  use Anubis.Server.Component, type: :tool
+  use Snodo.Tool.Simple,
+    name: "audit_mix_deps",
+    description: "Audit mix.exs dependencies for risks"
 
-  alias Anubis.Server.Response
   alias HexpmMcp.Formatter
 
-  schema do
-    field(:deps, :string,
-      required: true,
-      description: "Mix.exs deps list as text, e.g. {:phoenix, \"~> 1.7\"}, {:ecto, \"~> 3.10\"}"
-    )
-  end
+  argument("deps", :string,
+    required: true,
+    description: "Mix.exs deps list as text, e.g. {:phoenix, \"~> 1.7\"}, {:ecto, \"~> 3.10\"}"
+  )
 
   @impl true
-  def execute(%{deps: deps}, frame) do
+  def call(%{"deps" => deps}, _context) do
     case HexpmMcp.audit_mix_deps(deps) do
       {:ok, audit} ->
-        {:reply, Response.text(Response.tool(), Formatter.format_mix_audit(audit)), frame}
+        {:ok, Snodo.Result.text(Formatter.format_mix_audit(audit))}
 
       {:error, :no_deps_found} ->
-        {:reply, Response.text(Response.tool(), "No dependencies found in the provided text."),
-         frame}
+        {:ok, Snodo.Result.error("No dependencies found in the provided text.")}
     end
   end
 end
