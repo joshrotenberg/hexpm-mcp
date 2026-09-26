@@ -66,14 +66,10 @@ defmodule HexpmMcp.MixProject do
 
   defp deps do
     [
-      # snodo is being integrated from its sibling checkout while the
-      # framework is still pre-release. SNODO_PATH keeps the target usable
-      # from a different workspace layout during co-development.
-      dep(:snodo, "~> 0.1", "SNODO_PATH", path: "../snodo"),
-      dep(:snodo_jsv, "~> 0.1", "SNODO_JSV_PATH",
-        path: framework_path("integrations/schema_jsv"),
-        optional: true
-      ),
+      # Held to 0.2.x: before 1.0, snodo's minor versions carry breaking
+      # changes. SNODO_PATH=../snodo uses a local checkout for both packages.
+      snodo_dep(:snodo, "."),
+      snodo_dep(:snodo_jsv, "integrations/schema_jsv", optional: true),
       # 0.2.1 for Cheer.parse/3 and Cheer.argv/0; 0.2.0 has neither.
       dep(:cheer, "~> 0.2.1", "CHEER_PATH"),
       # 0.2.22 threads the release tag into `tinfoil.build`. Before it, the
@@ -103,23 +99,26 @@ defmodule HexpmMcp.MixProject do
   end
 
   # Resolve a dependency against a local checkout when the given env var is set.
-  # Published dependencies otherwise use Hex; snodo supplies a sibling path as
-  # its pre-release default.
   #
   #     CHEER_PATH=../cheer mix deps.get
   #
   defp dep(app, requirement, env_var, opts \\ []) do
     case System.get_env(env_var) do
-      nil ->
-        if Keyword.has_key?(opts, :path), do: {app, opts}, else: {app, requirement, opts}
-
-      path ->
-        {app, [path: path] ++ Keyword.delete(opts, :path)}
+      nil -> {app, requirement, opts}
+      path -> {app, [path: path] ++ opts}
     end
   end
 
-  defp framework_path(relative),
-    do: Path.join(System.get_env("SNODO_PATH", "../snodo"), relative)
+  # snodo and snodo_jsv are released together, so one checkout serves both.
+  #
+  #     SNODO_PATH=../snodo mix deps.get
+  #
+  defp snodo_dep(app, subdir, opts \\ []) do
+    case System.get_env("SNODO_PATH") do
+      nil -> {app, "~> 0.2.0", opts}
+      root -> {app, [path: Path.join(root, subdir)] ++ opts}
+    end
+  end
 
   defp releases do
     [

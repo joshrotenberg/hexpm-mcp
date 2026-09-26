@@ -388,8 +388,8 @@ iex / Elixir code                 MCP clients
 
 ## Development
 
-Until `snodo` is on Hex, development expects its checkout at `../snodo`. Set
-`SNODO_PATH` to use another location.
+`snodo` and `snodo_jsv` come from Hex. To build against a local snodo checkout,
+set `SNODO_PATH`, for example `SNODO_PATH=../snodo mix deps.get`.
 
 `test/fixtures/mcp_tool_catalog.json` holds the tool catalog, and the tests check
 the tool definitions against it. The acceptance tests seed domain data and
@@ -397,9 +397,9 @@ exercise resources, tool failures, and argument validation through direct
 dispatch, stdio, and HTTP.
 
 snodo's check with the official TypeScript client also runs against this
-server, over stdio and HTTP, with seeded domain responses. Install its pinned
-Node dependencies once with `npm ci --ignore-scripts` in
-`snodo/interop/official_client`, then:
+server, over stdio and HTTP, with seeded domain responses. It needs a snodo
+checkout at `../snodo`. Install its pinned Node dependencies once with
+`npm ci --ignore-scripts` in `snodo/interop/official_client`, then:
 
 ```sh
 MIX_ENV=test mix compile --warnings-as-errors
