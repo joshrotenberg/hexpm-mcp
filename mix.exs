@@ -70,10 +70,20 @@ defmodule HexpmMcp.MixProject do
       # framework is still pre-release. SNODO_PATH keeps the target usable
       # from a different workspace layout during co-development.
       dep(:snodo, "~> 0.1", "SNODO_PATH", path: "../snodo"),
+      dep(:snodo_tasks, "~> 0.1", "SNODO_TASKS_PATH", path: framework_path("extensions/tasks")),
+      dep(:snodo_tasks_sqlite, "~> 0.1", "SNODO_TASKS_SQLITE_PATH",
+        path: framework_path("extensions/tasks_sqlite")
+      ),
       dep(:snodo_jsv, "~> 0.1", "SNODO_JSV_PATH",
         path: framework_path("integrations/schema_jsv"),
         optional: true
       ),
+      dep(:snodo_plug, "~> 0.1", "SNODO_PLUG_PATH",
+        path: framework_path("integrations/plug"),
+        only: [:dev, :test]
+      ),
+      {:bandit, "~> 1.0", only: [:dev, :test]},
+      {:ecto_sqlite3, "~> 0.24.1"},
       # 0.2.1 for Cheer.parse/3 and Cheer.argv/0; 0.2.0 has neither.
       dep(:cheer, "~> 0.2.1", "CHEER_PATH"),
       # 0.2.22 threads the release tag into `tinfoil.build`. Before it, the

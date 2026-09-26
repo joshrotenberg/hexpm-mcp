@@ -19,6 +19,10 @@ hints, and prompt and resource arguments complete package names. The
 `package_review` prompt asks for its `focus` (quality, security, or upgrade)
 when the argument is omitted and the client supports elicitation.
 
+An opt-in [durable package audit](docs/durable-audit.md) workflow runs audits
+as snodo Tasks backed by SQLite. Default startup does not use it or create a
+database.
+
 ## Quick Start
 
 A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your MCP client config (Claude Desktop, Claude Code, or any MCP client):
