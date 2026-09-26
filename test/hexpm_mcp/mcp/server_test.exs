@@ -56,10 +56,10 @@ defmodule HexpmMcp.MCP.ServerTest do
   end
 
   test "validates tool argument shape before invoking domain code" do
-    assert {:ok, %{"error" => %{"code" => -32_602}}} =
+    assert {:ok, %{"result" => %{"isError" => true}}} =
              dispatch("tools/call", %{"name" => "search", "arguments" => %{}})
 
-    assert {:ok, %{"error" => %{"code" => -32_602}}} =
+    assert {:ok, %{"result" => %{"isError" => true}}} =
              dispatch("tools/call", %{
                "name" => "search",
                "arguments" => %{"query" => "ecto", "page" => "one"}

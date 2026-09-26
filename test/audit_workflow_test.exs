@@ -132,15 +132,24 @@ defmodule HexpmMcp.AuditWorkflowTest do
   test "invalid arguments and forged tenant metadata never create a durable descriptor", ctx do
     runtime = AuditWorkflow.runtime(ctx.store, runner(ctx.store))
 
+    # snodo refuses arguments that fail the input schema before the tool runs,
+    # as isError results.
     for args <- [
           %{},
           %{"name" => "jason"},
           %{"name" => "../jason", "version" => "1.0.0"},
-          %{"name" => "jason\n", "version" => "1.0.0"},
-          %{"name" => "jason", "version" => "latest"},
-          %{"name" => "jason", "version" => "~> 1.0"},
           %{"name" => "jason", "version" => 1},
           %{"name" => "jason", "version" => "1.0.0", "tenant" => "other"}
+        ] do
+      assert {:ok, %{"result" => %{"isError" => true}}} =
+               dispatch(runtime, "tools/call", %{"name" => Tool.name(), "arguments" => args})
+    end
+
+    # The tool's own check refuses these with a protocol error.
+    for args <- [
+          %{"name" => "jason\n", "version" => "1.0.0"},
+          %{"name" => "jason", "version" => "latest"},
+          %{"name" => "jason", "version" => "~> 1.0"}
         ] do
       assert {:ok, %{"error" => %{"code" => -32_602}}} =
                dispatch(runtime, "tools/call", %{"name" => Tool.name(), "arguments" => args})

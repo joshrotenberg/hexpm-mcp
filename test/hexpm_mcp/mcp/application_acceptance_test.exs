@@ -96,7 +96,7 @@ defmodule HexpmMcp.MCP.ApplicationAcceptanceTest do
     end
   end
 
-  test "tool domain failures are results while invalid arguments are protocol errors", context do
+  test "tool domain failures and invalid arguments are isError results", context do
     for transport <- [:direct, :stdio, :http] do
       for {name, args} <- [
             {"info", %{"name" => "missing_fixture"}},
@@ -110,7 +110,7 @@ defmodule HexpmMcp.MCP.ApplicationAcceptanceTest do
       end
 
       for args <- [%{}, %{"name" => 42}] do
-        assert %{"error" => %{"code" => -32_602}} =
+        assert %{"result" => %{"isError" => true, "resultType" => "complete"}} =
                  dispatch(context, transport, "tools/call", %{
                    "name" => "info",
                    "arguments" => args
