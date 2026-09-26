@@ -9,30 +9,19 @@
 
 MCP server for querying [hex.pm](https://hex.pm) and [hexdocs.pm](https://hexdocs.pm) -- the Elixir/Erlang package registry and documentation hosting.
 
-Built with `snodo`'s protocol-first server, component, stdio, and native
-Streamable HTTP APIs.
+Built with [snodo](https://github.com/joshrotenberg/snodo). It speaks MCP
+`2026-07-28` over stdio and Streamable HTTP, so clients need to support that
+revision.
 
-This checkout contains the local `snodo` migration. It speaks MCP
-`2026-07-28` and requires a client supporting that revision. The migration has
-not been released or deployed; published binaries and the public endpoint must
-be checked separately. See [Development](#development) for the local setup.
-
-The local application now uses the optional JSV schema backend, eight-entry
-catalog pages with cache hints, package-name completion for prompts/resources,
-and a read-only `package_review` prompt. If its `focus` argument is omitted,
-an elicitation-capable client asks for quality/security/upgrade and retries;
-other clients can supply `focus` directly. There are still 24 ordinary tools,
-plus six prompts. The separate durable-audit workflow is explicitly opt-in;
-default startup does not create or migrate a database.
-See [the durable audit guide](docs/durable-audit.md) for explicit SQLite/Runner
-ownership, authenticated HTTP acceptance, restart recovery, and important audit
-and deployment limits. The [dependency audit](docs/dependency-audit.md) records
-patched packages and the remaining test-only advisories.
+It provides 24 tools, six prompts, and package resources. Tool arguments are
+validated against their JSON Schemas, lists come in pages of eight with cache
+hints, and prompt and resource arguments complete package names. The
+`package_review` prompt asks for its `focus` (quality, security, or upgrade)
+when the argument is omitted and the client supports elicitation.
 
 ## Quick Start
 
-The published service uses `https://hexpm-mcp.fly.dev/mcp`. Its client
-configuration is shown below; this does not select the local migration:
+A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your MCP client config (Claude Desktop, Claude Code, or any MCP client):
 
 ```json
 {
@@ -399,29 +388,24 @@ iex / Elixir code                 MCP clients
 
 ## Development
 
-Until `snodo` is published, development expects its checkout at `../snodo`.
-Set `SNODO_PATH` to use another location.
+Until `snodo` is on Hex, development expects its checkout at `../snodo`. Set
+`SNODO_PATH` to use another location.
 
-The tool catalog is captured in `test/fixtures/mcp_tool_catalog.json` to keep
-the Simple DSL migration wire-compatible. Application acceptance tests seed
-domain data and check resource payloads, tool failures, and schema rejection
-through direct dispatch, stdio, and the native HTTP listener.
+`test/fixtures/mcp_tool_catalog.json` holds the tool catalog, and the tests check
+the tool definitions against it. The acceptance tests seed domain data and
+exercise resources, tool failures, and argument validation through direct
+dispatch, stdio, and HTTP.
 
-The independent TypeScript client check lives with the sibling framework:
+snodo's check with the official TypeScript client also runs against this
+server, over stdio and HTTP, with seeded domain responses. Install its pinned
+Node dependencies once with `npm ci --ignore-scripts` in
+`snodo/interop/official_client`, then:
 
 ```sh
 MIX_ENV=test mix compile --warnings-as-errors
 cd ../snodo
 HEXPM_MCP_BUILD_PATH=../hexpm-mcp/_build/test node interop/official_client/check_hexpm.mjs
 ```
-
-Install the pinned Node dependencies with `npm ci --ignore-scripts` from
-`snodo/interop/official_client` before its first run. The client check starts
-the real application server with seeded domain responses and exercises both
-stdio and HTTP; it does not verify public Hex services or other client hosts.
-It also checks the three actual tool-list pages, two package-completion paths,
-and an automatically resumed review. Older-only MCP clients still need a
-separate legacy implementation; installing a schema backend does not add one.
 
 ```bash
 # Install dependencies
