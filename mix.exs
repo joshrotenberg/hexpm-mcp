@@ -67,7 +67,8 @@ defmodule HexpmMcp.MixProject do
   defp deps do
     [
       # Held to 0.2.x: before 1.0, snodo's minor versions carry breaking
-      # changes. SNODO_PATH=../snodo uses a local checkout for both packages.
+      # changes. 0.2.1 serves initialize-era clients over stdio.
+      # SNODO_PATH=../snodo uses a local checkout for both packages.
       snodo_dep(:snodo, "."),
       snodo_dep(:snodo_jsv, "integrations/schema_jsv", optional: true),
       # 0.2.1 for Cheer.parse/3 and Cheer.argv/0; 0.2.0 has neither.
@@ -115,7 +116,7 @@ defmodule HexpmMcp.MixProject do
   #
   defp snodo_dep(app, subdir, opts \\ []) do
     case System.get_env("SNODO_PATH") do
-      nil -> {app, "~> 0.2.0", opts}
+      nil -> {app, "~> 0.2.1", opts}
       root -> {app, [path: Path.join(root, subdir)] ++ opts}
     end
   end
