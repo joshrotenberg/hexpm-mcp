@@ -10,9 +10,15 @@ defmodule HexpmMcp.MCP.Server do
   use Snodo.Server,
     name: "hexpm-mcp",
     version: @version,
-    protocols: [Snodo.Protocol.V2026_07_28],
+    protocols: [
+      Snodo.Protocol.V2026_07_28,
+      Snodo.Protocol.V2025_11_25,
+      Snodo.Protocol.V2025_06_18
+    ],
     schema_validator: Snodo.Schema.Validator.JSV,
-    pagination: [page_size: 8],
+    # Every catalog fits on one page. Some clients, Codex 0.157.1 among them,
+    # read only the first page of tools/list.
+    pagination: [page_size: 100],
     discovery_cache: [ttl_ms: 60_000, scope: "public"],
     tools_cache: [ttl_ms: 60_000, scope: "public"],
     prompts_cache: [ttl_ms: 60_000, scope: "public"],
