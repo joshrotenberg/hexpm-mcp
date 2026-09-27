@@ -6,7 +6,7 @@ defmodule HexpmMcp.MixProject do
   def project do
     [
       app: :hexpm_mcp,
-      version: "0.3.7",
+      version: "0.3.8",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),

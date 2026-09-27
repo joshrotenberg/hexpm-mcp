@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.8](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.7...v0.3.8) (2026-09-27)
+
+
+### Features
+
+* port the MCP layer from anubis_mcp to snodo ([#81](https://github.com/joshrotenberg/hexpm-mcp/issues/81)) ([b8ea5f9](https://github.com/joshrotenberg/hexpm-mcp/commit/b8ea5f9ebfa3212a7fa1560d9179f9c9ffa8c3c7))
+* serve 2025-11-25 and 2025-06-18 MCP clients ([#84](https://github.com/joshrotenberg/hexpm-mcp/issues/84)) ([1333f17](https://github.com/joshrotenberg/hexpm-mcp/commit/1333f1770451dc1b614ef4611d198c3d86854cd0))
+
 ## [0.3.7](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.6...v0.3.7) (2026-07-26)
 
 
