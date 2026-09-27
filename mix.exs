@@ -222,9 +222,14 @@ defmodule HexpmMcp.MixProject do
       # elixir and otp are pinned to match ci.yml and the Dockerfile rather than
       # tracking whichever runtime generated this workflow. zig is left to
       # tinfoil, which reads it from Burrito.get_versions/0.
+      #
+      # otp is an exact version because Burrito downloads a prebuilt ERTS for
+      # the build host's OTP, and its CDN lags OTP patch releases: "28" resolved
+      # to 28.5.0.7, which had no Burrito build, and v0.3.8 shipped without
+      # binaries. Move this only to a version the CDN has for every target.
       ci: [
         elixir_version: "1.19",
-        otp_version: "28"
+        otp_version: "28.5.0.6"
       ]
     ]
   end
