@@ -10,14 +10,16 @@
 MCP server for querying [hex.pm](https://hex.pm) and [hexdocs.pm](https://hexdocs.pm) -- the Elixir/Erlang package registry and documentation hosting.
 
 Built with [snodo](https://github.com/joshrotenberg/snodo). It speaks MCP
-`2026-07-28` over stdio and Streamable HTTP, so clients need to support that
-revision.
+`2026-07-28`, `2025-11-25`, and `2025-06-18` over stdio and Streamable HTTP.
+See [Protocol compatibility](#protocol-compatibility) for what the older
+revisions lack.
 
 It provides 24 tools, six prompts, and package resources. Tool arguments are
-validated against their JSON Schemas, lists come in pages of eight with cache
+validated against their JSON Schemas, each list fits on one page with cache
 hints, and prompt and resource arguments complete package names. The
 `package_review` prompt asks for its `focus` (quality, security, or upgrade)
-when the argument is omitted and the client supports elicitation.
+when the argument is omitted and the client supports elicitation. Otherwise the
+review covers all three.
 
 ## Quick Start
 
@@ -33,6 +35,32 @@ A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your 
   }
 }
 ```
+
+## Protocol compatibility
+
+| MCP revision | stdio | Streamable HTTP |
+|---|---|---|
+| `2026-07-28` | Yes | Yes |
+| `2025-11-25` | Yes | Yes |
+| `2025-06-18` | Yes | Yes |
+| `2025-03-26`, `2024-11-05` | No | No |
+
+A client that proposes a revision not in this table is offered `2025-11-25`.
+
+On `2025-11-25` and `2025-06-18`:
+
+- The server sends no requests to the client, so `package_review` without a
+  `focus` returns a review across all three focuses instead of asking.
+- HTTP is stateless. `initialize` issues no `Mcp-Session-Id`, every later
+  request needs an `MCP-Protocol-Version` header, and `GET` and `DELETE` on
+  `/mcp` return 405.
+
+> **Upgrading from 0.3.7.** 0.3.7 and earlier were built on anubis_mcp. They
+> also served `2025-03-26` and `2024-11-05`, and kept HTTP sessions with a `GET`
+> event stream. Clients that depend on those can no longer connect.
+
+Checked over stdio on 2026-09-26: Codex 0.157.1 negotiates `2025-06-18`, and
+Claude Code 2.1.283 uses `2026-07-28`.
 
 ## Installation
 

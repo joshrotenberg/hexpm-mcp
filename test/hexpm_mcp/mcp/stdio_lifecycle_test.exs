@@ -32,8 +32,32 @@ defmodule HexpmMcp.MCP.StdioLifecycleTest do
     assert %{"id" => "eof-discover", "jsonrpc" => "2.0", "result" => result} =
              JSON.decode!(line)
 
-    assert result["supportedVersions"] == ["2026-07-28"]
+    assert result["supportedVersions"] == ["2026-07-28", "2025-11-25", "2025-06-18"]
     assert get_in(result, ["_meta", "io.modelcontextprotocol/serverInfo", "name"]) == "hexpm-mcp"
+  end
+
+  # A client waits for this result before its next message, so the input holds
+  # initialize alone.
+  test "the actual application negotiates an initialize-era version over stdio", %{
+    tmp_dir: dir
+  } do
+    request = %{
+      "jsonrpc" => "2.0",
+      "id" => "legacy-initialize",
+      "method" => "initialize",
+      "params" => %{
+        "protocolVersion" => "2025-06-18",
+        "capabilities" => %{},
+        "clientInfo" => %{"name" => "initialize-era", "version" => "1"}
+      }
+    }
+
+    assert {0, output, ""} = subprocess(dir, JSON.encode!(request) <> "\n", @application)
+    assert [line] = String.split(output, "\n", trim: true)
+
+    assert %{"id" => "legacy-initialize", "result" => result} = JSON.decode!(line)
+    assert result["protocolVersion"] == "2025-06-18"
+    assert result["serverInfo"]["name"] == "hexpm-mcp"
   end
 
   test "a transport startup failure reports stderr and exits nonzero", %{tmp_dir: dir} do

@@ -66,17 +66,19 @@ defmodule HexpmMcp.MCP.DiscoveryWorkflowTest do
   end
 
   test "catalog pages retain cache hints and cursors cannot cross list methods" do
+    paged = Server.runtime(pagination: [page_size: 8])
+
     assert %{"result" => %{"tools" => tools, "nextCursor" => cursor} = result} =
-             dispatch("tools/list", %{})
+             dispatch("tools/list", %{}, runtime: paged)
 
     assert length(tools) == 8
     assert result["ttlMs"] == 60_000
     assert result["cacheScope"] == "public"
 
     assert %{"error" => %{"code" => -32_602}} =
-             dispatch("prompts/list", %{"cursor" => cursor})
+             dispatch("prompts/list", %{"cursor" => cursor}, runtime: paged)
 
-    assert %{"result" => next} = dispatch("tools/list", %{"cursor" => cursor})
+    assert %{"result" => next} = dispatch("tools/list", %{"cursor" => cursor}, runtime: paged)
     assert Map.take(next, ["ttlMs", "cacheScope"]) == Map.take(result, ["ttlMs", "cacheScope"])
     assert MapSet.disjoint?(MapSet.new(tools), MapSet.new(next["tools"]))
   end
@@ -105,8 +107,11 @@ defmodule HexpmMcp.MCP.DiscoveryWorkflowTest do
 
   test "review handles missing, declined, cancelled input and hosts without elicitation" do
     params = %{"name" => "package_review", "arguments" => %{"name" => "ecto"}}
-    assert %{"error" => error} = dispatch("prompts/get", params, client_capabilities: %{})
-    assert error["code"] == -32_021
+
+    assert %{"result" => %{"resultType" => "complete", "messages" => [review]}} =
+             dispatch("prompts/get", params, client_capabilities: %{})
+
+    assert review["content"]["text"] =~ "quality, security, and upgrade review"
 
     assert %{"result" => %{"resultType" => "input_required"}} =
              dispatch("prompts/get", Map.put(params, "inputResponses", %{}))
@@ -152,9 +157,11 @@ defmodule HexpmMcp.MCP.DiscoveryWorkflowTest do
   end
 
   defp dispatch(method, params, opts \\ []) do
+    {runtime, opts} = Keyword.pop_lazy(opts, :runtime, &Server.runtime/0)
+
     {:ok, result} =
       Snodo.Test.dispatch(
-        Server.runtime(),
+        runtime,
         Keyword.merge(
           [
             protocol: "2026-07-28",

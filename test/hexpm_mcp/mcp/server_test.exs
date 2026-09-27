@@ -8,6 +8,7 @@ defmodule HexpmMcp.MCP.ServerTest do
   alias Snodo.Transport.StreamableHTTP.Server, as: HTTPServer
 
   @protocol "2026-07-28"
+  @supported_versions ["2026-07-28", "2025-11-25", "2025-06-18"]
 
   @tool_names ~w(
     alternatives audit audit_mix_deps compare dep_tree dependencies doc_item docs downloads
@@ -22,7 +23,7 @@ defmodule HexpmMcp.MCP.ServerTest do
   test "discovers the application identity and all component capabilities" do
     assert {:ok, %{"result" => result}} = dispatch("server/discover")
 
-    assert result["supportedVersions"] == [@protocol]
+    assert result["supportedVersions"] == @supported_versions
 
     assert result["capabilities"] == %{
              "completions" => %{},
@@ -37,8 +38,9 @@ defmodule HexpmMcp.MCP.ServerTest do
            }
   end
 
-  test "lists all tools with their public JSON schemas" do
-    tools = tools_pages(%{}, [])
+  test "lists all tools on one page with their public JSON schemas" do
+    assert {:ok, %{"result" => %{"tools" => tools} = result}} = dispatch("tools/list")
+    refute Map.has_key?(result, "nextCursor")
 
     assert Enum.map(tools, & &1["name"]) == Enum.sort(@tool_names)
 
@@ -115,7 +117,48 @@ defmodule HexpmMcp.MCP.ServerTest do
 
     assert response.status == 200
 
-    assert get_in(JSON.decode!(response.body), ["result", "supportedVersions"]) == [@protocol]
+    assert get_in(JSON.decode!(response.body), ["result", "supportedVersions"]) ==
+             @supported_versions
+  end
+
+  for version <- ["2025-11-25", "2025-06-18"] do
+    @version version
+
+    test "serves #{version} clients through the native Streamable HTTP listener" do
+      {:ok, server} = start_supervised({HTTPServer, runtime: Server.runtime(), port: 0})
+      {{127, 0, 0, 1}, port, "/mcp"} = HTTPServer.address(server)
+
+      initialize =
+        legacy_request(1, "initialize", %{
+          "protocolVersion" => @version,
+          "capabilities" => %{},
+          "clientInfo" => %{"name" => "initialize-era", "version" => "1"}
+        })
+
+      assert %{"result" => %{"protocolVersion" => @version, "serverInfo" => server_info}} =
+               post(port, initialize, @version).body |> JSON.decode!()
+
+      assert server_info["name"] == "hexpm-mcp"
+
+      assert %{"result" => %{"tools" => tools} = listed} =
+               post(port, legacy_request(2, "tools/list"), @version).body |> JSON.decode!()
+
+      assert length(tools) == length(@tool_names)
+      refute Map.has_key?(listed, "nextCursor")
+      refute Map.has_key?(listed, "resultType")
+
+      # These dialects cannot ask for the focus, so the review covers all three.
+      review =
+        legacy_request(3, "prompts/get", %{
+          "name" => "package_review",
+          "arguments" => %{"name" => "ecto"}
+        })
+
+      assert %{"result" => %{"messages" => [message]}} =
+               post(port, review, @version).body |> JSON.decode!()
+
+      assert message["content"]["text"] =~ "quality, security, and upgrade review"
+    end
   end
 
   defp dispatch(method, params \\ %{}) do
@@ -124,16 +167,6 @@ defmodule HexpmMcp.MCP.ServerTest do
       method: method,
       params: params
     )
-  end
-
-  defp tools_pages(params, previous) do
-    assert {:ok, %{"result" => %{"tools" => tools} = result}} = dispatch("tools/list", params)
-    assert length(tools) == 8
-
-    case Map.fetch(result, "nextCursor") do
-      {:ok, cursor} -> tools_pages(%{"cursor" => cursor}, previous ++ tools)
-      :error -> previous ++ tools
-    end
   end
 
   defp request(id, method, params \\ %{}) do
@@ -150,13 +183,16 @@ defmodule HexpmMcp.MCP.ServerTest do
     }
   end
 
-  defp post(port, raw) do
+  defp legacy_request(id, method, params \\ %{}),
+    do: %{"jsonrpc" => "2.0", "id" => id, "method" => method, "params" => params}
+
+  defp post(port, raw, version \\ @protocol) do
     body = JSON.encode!(raw)
 
     headers = [
       {"Content-Type", "application/json"},
       {"Accept", "application/json, text/event-stream"},
-      {"MCP-Protocol-Version", @protocol},
+      {"MCP-Protocol-Version", version},
       {"Mcp-Method", raw["method"]},
       {"Content-Length", Integer.to_string(byte_size(body))}
     ]
