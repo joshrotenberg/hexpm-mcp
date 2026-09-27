@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.9](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.8...v0.3.9) (2026-09-27)
+
+
+### Bug Fixes
+
+* **deps:** update snodo to 0.3.0 ([#87](https://github.com/joshrotenberg/hexpm-mcp/issues/87)) ([64fcfbd](https://github.com/joshrotenberg/hexpm-mcp/commit/64fcfbd608af00ddb45c4ba60e2647bb7ada8c9e))
+* pin release builds to an OTP that Burrito publishes ([#85](https://github.com/joshrotenberg/hexpm-mcp/issues/85)) ([fc9a3ce](https://github.com/joshrotenberg/hexpm-mcp/commit/fc9a3cea0c2bdf5765c4d41003882ed71bdd52ea))
+
 ## [0.3.8](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.7...v0.3.8) (2026-09-27)
 
 
