@@ -9,7 +9,6 @@ erl_crash.dump
 /tmp/
 hexpm_mcp-*.tar
 .elixir_ls/
-CLAUDE.md
 books.json
 
 # macOS
