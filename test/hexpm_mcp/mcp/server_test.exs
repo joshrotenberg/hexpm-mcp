@@ -194,7 +194,10 @@ defmodule HexpmMcp.MCP.ServerTest do
       {"Accept", "application/json, text/event-stream"},
       {"MCP-Protocol-Version", version},
       {"Mcp-Method", raw["method"]},
-      {"Content-Length", Integer.to_string(byte_size(body))}
+      {"Content-Length", Integer.to_string(byte_size(body))},
+      # The native listener keeps connections alive, and recv_all/2 reads until
+      # the server closes the socket.
+      {"Connection", "close"}
     ]
 
     lines = Enum.map(headers, fn {name, value} -> [name, ": ", value, "\r\n"] end)
