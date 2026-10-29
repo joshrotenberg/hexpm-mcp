@@ -21,6 +21,10 @@ hints, and prompt and resource arguments complete package names. The
 when the argument is omitted and the client supports elicitation. Otherwise the
 review covers all three.
 
+The server sends instructions that name the tools to start with for each task.
+`hexpm_mcp init` installs it as a Claude Code and Codex plugin, together with a
+skill for evaluating, upgrading and auditing dependencies.
+
 ## Quick Start
 
 A public instance is running at `https://hexpm-mcp.fly.dev/mcp`. Add it to your MCP client config (Claude Desktop, Claude Code, or any MCP client):
@@ -104,7 +108,9 @@ hexpm_mcp --version
 
 See [Usage](#usage) for the MCP client config, and
 [macOS: "Apple could not verify hexpm_mcp"](#macos-apple-could-not-verify-hexpm_mcp)
-if Gatekeeper blocks a browser-downloaded copy.
+if Gatekeeper blocks a browser-downloaded copy. For Claude Code and Codex,
+[`hexpm_mcp init`](#claude-code-and-codex-hexpm_mcp-init) sets it up in one
+step.
 
 ### As an Elixir library
 
@@ -128,7 +134,9 @@ mix deps.get
 
 - 24 tools for searching, inspecting, comparing, auditing, and discovering hex.pm packages
 - 5 resources for structured package and discovery data access
-- 5 guided analysis prompts
+- 6 guided analysis prompts
+- Server instructions naming the entry tools for each task
+- A Claude Code and Codex plugin (MCP server, skill, and hook) installed by `hexpm_mcp init`
 - HexDocs browsing (module listing, doc search, full module docs)
 - Curated package discovery via Elixir Toolbox (groups, trending, enriched search)
 - OSV.dev vulnerability checking
@@ -244,6 +252,45 @@ Checked 10 dependencies. 8 warning(s) across 7 package(s).
 ```
 
 ## Usage
+
+### Claude Code and Codex (`hexpm_mcp init`)
+
+From 0.3.9, the binary installs itself as a plugin for Claude Code and Codex.
+The plugin bundles the MCP server with a skill that tells the agent when to use
+these tools: before adding a dependency, when upgrading, when auditing a
+project, and when writing code against a package's API. In Claude Code it also
+adds a hook that suggests `audit_mix_deps` and `upgrade_check` after an edit to
+`mix.exs` or `mix.lock`.
+
+```sh
+hexpm_mcp init --dry-run
+hexpm_mcp init
+```
+
+`--dry-run` shows the files and host commands without changing anything. init
+writes a local plugin marketplace, including a copy of the binary, to
+`~/.local/share/hexpm_mcp` (or `$XDG_DATA_HOME/hexpm_mcp`). It then registers
+the marketplace with `claude plugin` and `codex plugin`. It configures whichever
+of the two is installed, and `--host claude` or `--host codex` picks one. It
+does not edit either host's configuration files directly. Reload plugins or
+start a new session afterwards.
+
+Run `hexpm_mcp init` again after upgrading the binary to update the plugin.
+
+If you already added hexpm-mcp as an MCP server by hand, init lists that entry
+when it finishes. The agent would otherwise see every tool twice, so remove one
+of them, for example with `claude mcp remove hexpm`.
+
+To remove the plugin:
+
+```sh
+claude plugin uninstall hexpm@hexpm-local --scope user
+claude plugin marketplace remove hexpm-local
+codex plugin remove hexpm@hexpm-local
+codex plugin marketplace remove hexpm-local
+```
+
+init is not supported on Windows yet.
 
 ### Standalone binary (stdio)
 
@@ -409,7 +456,10 @@ iex / Elixir code                 MCP clients
 - **`HexpmMcp.OSV`** -- OSV.dev vulnerability database client
 - **`HexpmMcp.Toolbox`** -- Elixir Toolbox client for curated package discovery
 - **`HexpmMcp.Cache`** -- ETS-based response cache with TTL and periodic sweeping
-- **`HexpmMcp.CLI`** -- Cheer command tree; turns argv into the server's configuration
+- **`HexpmMcp.CLI`** -- Cheer command tree; turns argv into the server's configuration,
+  or into the `init` subcommand
+- **`HexpmMcp.Init`** -- `hexpm_mcp init`: writes the plugin marketplace and registers
+  it through the `claude` and `codex` CLIs
 - **`HexpmMcp.MCP.StdioLifecycle`** -- owns the stdio serving Task, drains requests
   on EOF, exits 0 on orderly disconnect, and reports transport failures with exit 1
 - **MCP Tools, Resources, and Prompts** -- thin, JSON-shaped protocol components registered with `Snodo.Server`
@@ -454,6 +504,16 @@ mix run --no-halt
 # Run locally (stdio for MCP clients)
 mix run --no-halt -- --transport stdio
 ```
+
+Under `mix` there is no standalone binary to install, so `init` from a checkout
+needs `--binary` pointing at a built or released `hexpm_mcp`:
+
+```sh
+mix run -- init --dry-run --binary /path/to/hexpm_mcp
+```
+
+The plugin sources are in `priv/plugin/hexpm`. `test/hexpm_mcp/plugin_test.exs`
+checks that every tool the skill names is served.
 
 ## License
 

@@ -17,7 +17,8 @@ one local checkout. The MCP layer moved from anubis_mcp to snodo in #81.
 lib/
   hexpm_mcp.ex             -- Public API (25 functions returning structured maps)
   hexpm_mcp/
-    application.ex         -- OTP app: resolves CLI config, starts cache + transport
+    application.ex         -- OTP app: resolves CLI config, starts cache + transport,
+                              or runs init and halts
     client.ex              -- HTTP client for hex.pm API (Req)
     hexdocs.ex             -- HexDocs client: sidebar_items parsing, HTML-to-markdown
     osv.ex                 -- OSV.dev client for vulnerability auditing
@@ -25,7 +26,10 @@ lib/
     cache.ex               -- ETS-based response cache with TTL + sweeper
     types.ex               -- Response structs (Package, Release, Owner)
     formatter.ex           -- Markdown formatting (one function per API call)
-    cli.ex                 -- Cheer command tree; argv -> server config
+    cli.ex                 -- Cheer command tree; argv -> server config or init
+    cli/init.ex            -- the init subcommand's options
+    init.ex                -- hexpm_mcp init: writes the local marketplace and
+                              registers it through the claude and codex CLIs
 
     mcp/
       server.ex            -- Snodo.Server definition (24 tools, 5 resources, 6 prompts)
@@ -49,6 +53,11 @@ lib/
                               compare_packages, evaluate_dependencies,
                               recommend_packages, migration_guide, package_review
 
+priv/plugin/hexpm/         -- Claude Code and Codex plugin, embedded by init.ex
+  .claude-plugin/plugin.json, .codex-plugin/plugin.json -- no version; init adds it
+  skills/hexpm/SKILL.md    -- dependency workflow skill
+  hooks/hooks.json, hooks/mix-deps.sh -- PostToolUse hook on mix.exs / mix.lock edits
+
 test/
   test_helper.exs
   hexpm_mcp_test.exs       -- API-level tests (Bypass mocks)
@@ -58,6 +67,8 @@ test/
     cli_test.exs           -- argv parsing and config/1
     formatter_test.exs     -- Markdown formatter tests
     hexdocs_test.exs       -- HTML-to-markdown tests
+    init_test.exs          -- init planning, written files, host steps (fake runner)
+    plugin_test.exs        -- manifests, skill names only served tools, hook script
     toolbox_test.exs       -- Elixir Toolbox client tests (Bypass)
     mcp/
       server_test.exs                 -- discovery, catalogs, argument validation,
@@ -100,7 +111,10 @@ startup. `HexpmMcp.Application` starts `HexpmMcp.Cache` plus one transport:
   consumed stdin cannot be reconnected, so the task is never restarted.
 - http: `Snodo.Transport.StreamableHTTP.Server`, snodo's native HTTP/1.1
   listener. It binds `0.0.0.0` on the configured port, serves `/mcp`, and
-  checks `Origin` against `allowed_origin_hosts`.
+  checks `Origin` against `allowed_origin_hosts`. Since snodo 0.4.3 it keeps
+  connections alive between requests, so the raw-socket helpers in
+  `server_test.exs` and `application_acceptance_test.exs`, which read until the
+  socket closes, send `Connection: close`.
 - none: the test env sets `transport: :none`, so no transport starts and the
   test runner's argv is never parsed as ours.
 
@@ -121,6 +135,13 @@ The server installs `Snodo.Schema.Validator.JSV` from `snodo_jsv`. snodo's
 default, `Snodo.Schema.Validator.Passthrough`, advertises input schemas but does
 not enforce them. With JSV, a `tools/call` with a missing or mistyped argument
 returns an `isError` tool result before the handler runs.
+
+The server sends `instructions` (the `@instructions` heredoc in `server.ex`) in
+the initialize result and in `server/discover`. A client that defers loading
+tool definitions, such as Claude Code with tool search, shows this text in place
+of the tool list, so it names the entry tools for each task. It sits in the
+client's context for the whole session, so keep it short. Nothing checks the
+tool names in it against the catalog.
 
 Completion: the `package_info` resource and the `analyze_package` and
 `package_review` prompts complete `name` through `HexpmMcp.MCP.PackageCompletion`.
@@ -213,8 +234,9 @@ Argument parsing lives in `HexpmMcp.CLI` (Cheer). `HexpmMcp.Application.start/2`
 is the real entry point in every mode: Burrito boots the BEAM and never calls a
 `main/1`. `System.argv/0` is empty inside a wrapped binary, so argv comes from
 `Cheer.argv/0`. The command tree is `parse_only`, consumed via `Cheer.parse/3`,
-which validates argv without dispatching a handler; the parse result builds the
-supervision tree. With no `--transport`, a standalone binary defaults to stdio
+which validates argv without dispatching a handler. `{:serve, opts}` builds the
+supervision tree; `{:init, args}` runs `HexpmMcp.Init.run/1` and halts before
+any child starts. With no `--transport`, a standalone binary defaults to stdio
 and everything else to http.
 
 All five targets are built on `ubuntu-latest`. darwin is cross-compiled: Zig only
@@ -239,7 +261,9 @@ release's binaries.
 - **Burrito caches the unpacked payload by app version**, and `tinfoil.build`
   forces `MIX_ENV=prod`, where Burrito does not re-extract. Rebuilding without
   bumping the version silently runs stale code. Clear it with
-  `rm -rf "$(./burrito_out/hexpm_mcp_<target> maintenance directory)"`.
+  `rm -rf "$(./burrito_out/hexpm_mcp_<target> maintenance directory)"`. The
+  first run of a newer version deletes older payloads and says so on stderr
+  (`Uninstalled older version (v0.3.6)`), so stdio stays clean.
 - **Burrito is held at `~> 1.5.0`.** 1.6.0 boots via `-s elixir start_cli` as
   separate argv tokens, which actually invokes Elixir's CLI; it then claims
   `--version` and `--help` and treats the first remaining argument as a script
@@ -266,11 +290,83 @@ release's binaries.
   so the installer is unaffected. See the README section and
   joshrotenberg/tinfoil#119.
 
+## Plugin and init
+
+`priv/plugin/hexpm` is one plugin directory serving both Claude Code and Codex,
+in timon's layout. `hexpm_mcp init` (`HexpmMcp.Init`) installs it, modeled on
+`due init` and `canale init`: it writes a local marketplace and registers it
+through each host's own CLI. It never edits a host's configuration files.
+
+- The tree is embedded at compile time: `@external_resource` per file, and
+  `__mix_recompile__?/0` compares the file listing so an added or removed file
+  recompiles too. The binary does not depend on how a release copies the
+  dot-directories in `priv/`.
+- The committed manifests carry no `version`. init writes the application
+  version into both installed manifests and the Claude marketplace entry.
+- The skill names tools in backticks, and `plugin_test.exs` fails if one is not
+  served. It tells agents that `audit_mix_deps` counts advisories for every
+  version; drop that caveat when #98 is fixed.
+- The hook is `sh` and `grep` only, and prints nothing for files other than
+  `mix.exs` and `mix.lock`.
+
+What init does, in order:
+
+1. Plan. Install dir: `--install-dir`, else `$XDG_DATA_HOME/hexpm_mcp` (ignored
+   when relative), else `~/.local/share/hexpm_mcp`. A non-empty directory
+   without `.hexpm-mcp-install.json` is refused. Binary: `--binary`, else
+   `Burrito.Util.Args.get_bin_path/0`, the launcher's `__BURRITO_BIN_PATH`
+   (the outer binary, not the version-keyed payload); under mix without
+   `--binary` init refuses. Hosts: `--host both` (the default) takes whichever
+   of `claude` and `codex` is on PATH; a host named with `--host` must exist.
+2. `--dry-run` stops here: nothing written, no host process started.
+3. Write the marker first, then the plugin tree (cleared first, so files a newer
+   release drops go too), `plugins/hexpm/.mcp.json` pointing at
+   `<dir>/bin/hexpm_mcp --transport stdio`, and both marketplace files. The
+   binary is copied through a temp file and rename, so a running server keeps
+   its inode.
+4. Register:
+
+   | Host | Steps |
+   |---|---|
+   | claude | `plugin marketplace list --json`; `plugin marketplace add <dir> --scope user` unless registered there, otherwise `plugin marketplace update hexpm-local`; `plugin list --json`; `plugin install hexpm@hexpm-local --scope user`, or `plugin update` when installed |
+   | codex | `plugin marketplace list --json`; `plugin marketplace add <dir>` unless registered; `plugin add hexpm@hexpm-local` |
+
+   A `hexpm-local` marketplace registered at another path stops the run, as
+   does the first failing step. Earlier steps stay applied.
+5. Report MCP servers that look like a hand-configured hexpm entry, from
+   `claude mcp list` and `codex mcp list --json`. Report only.
+
+### Gotchas
+
+- **The root command sets `args_conflicts_with_subcommands(true)`.** Cheer
+  prints help when a command with subcommands gets none, which would stop
+  `hexpm_mcp --transport stdio` from serving.
+- **`claude mcp list` has no JSON form and health-checks every server**, about
+  5s on this host, so init calls it once, after installing. It prints indented
+  warnings under a server defined at more than one scope (`├ Server "hexpm" is
+  defined in multiple scopes ...`). The parser takes a name of word characters,
+  dots, `@`, dashes and spaces only, so those lines and `plugin:<p>:<s>` entries
+  never match.
+- **Codex lists a plugin's MCP server under its plain name** (`hexpm`) in
+  `codex mcp list`, so the duplicate report drops entries whose target is the
+  installed binary.
+- **Claude Code keeps an uninstalled plugin's cache** in
+  `~/.claude/plugins/cache/hexpm-local`, marked `.orphaned_at`, and removes it
+  later on its own.
+- **Testing init live.** A darwin Burrito binary cannot be built on this host
+  (see Packaging), so run init from a checkout against a released binary:
+  `mix run -- init --dry-run --binary /path/to/hexpm_mcp`. A run without
+  `--dry-run` changes the user's Claude Code and Codex configuration. Remove it
+  with `claude plugin uninstall hexpm@hexpm-local --scope user`,
+  `claude plugin marketplace remove hexpm-local`,
+  `codex plugin remove hexpm@hexpm-local` and
+  `codex plugin marketplace remove hexpm-local`.
+
 ## Dependencies
 
-- `snodo` ~> 0.2.1 (Hex, via `snodo_dep/3`) -- MCP server framework. Held to
+- `snodo` ~> 0.4.3 (Hex, via `snodo_dep/3`) -- MCP server framework. Held to
   one minor version because snodo minors carry breaking changes before 1.0.
-- `snodo_jsv` ~> 0.2.1 (Hex, via `snodo_dep/3`, optional) -- JSV-backed JSON
+- `snodo_jsv` ~> 0.4.3 (Hex, via `snodo_dep/3`, optional) -- JSV-backed JSON
   Schema validation for tool arguments
 - `req` ~> 0.6 -- HTTP client
 - `floki` ~> 0.37 -- HTML parsing
