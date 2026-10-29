@@ -24,6 +24,9 @@ defmodule HexpmMcp.CLI do
     about("MCP server for hex.pm and hexdocs.pm")
     version(@version)
     parse_only()
+    # Serving is the default. Without this, a command with subcommands prints
+    # help when argv names none, so `hexpm_mcp --transport stdio` would exit.
+    args_conflicts_with_subcommands(true)
 
     after_help("""
     The default transport depends on how the server was started: stdio for the
@@ -44,13 +47,16 @@ defmodule HexpmMcp.CLI do
       short: :p,
       help: "Port for the http transport (default: 8765)"
     )
+
+    subcommand(HexpmMcp.CLI.Init)
   end
 
   @doc """
   Resolve argv into the server configuration.
 
-  Returns `{:serve, opts}` to start, `:handled` when Cheer already printed help
-  or version, and `:usage_error` when it already printed a usage error.
+  Returns `{:serve, opts}` to start, `{:init, args}` for the `init` subcommand,
+  `:handled` when Cheer already printed help or version, and `:usage_error`
+  when it already printed a usage error.
 
   argv comes from `Cheer.argv/0` because a Burrito-wrapped binary does not
   populate `System.argv/0`; its arguments arrive through
@@ -58,10 +64,11 @@ defmodule HexpmMcp.CLI do
   every option falls through to its default and the server looks like it
   started fine while speaking the wrong protocol.
   """
-  @spec parse() :: {:serve, keyword()} | :handled | :usage_error
+  @spec parse() :: {:serve, keyword()} | {:init, map()} | :handled | :usage_error
   def parse do
     case Cheer.parse(__MODULE__, Cheer.argv(), prog: "hexpm_mcp") do
       {:ok, __MODULE__, args} -> {:serve, config(args)}
+      {:ok, HexpmMcp.CLI.Init, args} -> {:init, args}
       :handled -> :handled
       {:error, :usage} -> :usage_error
     end

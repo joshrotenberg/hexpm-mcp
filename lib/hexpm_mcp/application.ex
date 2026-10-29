@@ -5,14 +5,16 @@ defmodule HexpmMcp.Application do
 
   require Logger
 
-  # start/2 halts on --help, --version, and usage errors, so it does not always
-  # return. That is intended for a CLI entry point, not a defect.
+  # start/2 halts on init, --help, --version, and usage errors, so it does not
+  # always return. That is intended for a CLI entry point, not a defect.
   @dialyzer {:nowarn_function, start: 2}
 
   @impl true
   def start(_type, _args) do
     case resolve_config() do
       {:serve, opts} -> start_supervisor(opts)
+      # init is a one-shot command: it runs before any server child starts.
+      {:init, args} -> System.halt(HexpmMcp.Init.run(args))
       :handled -> System.halt(0)
       :usage_error -> System.halt(2)
     end

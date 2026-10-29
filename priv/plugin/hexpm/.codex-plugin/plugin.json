@@ -1,0 +1,28 @@
+{
+  "name": "hexpm",
+  "description": "hex.pm, HexDocs, OSV.dev and Elixir Toolbox data for choosing, upgrading and auditing Elixir dependencies",
+  "author": {
+    "name": "Josh Rotenberg"
+  },
+  "repository": "https://github.com/joshrotenberg/hexpm-mcp",
+  "license": "MIT",
+  "keywords": [
+    "elixir",
+    "erlang",
+    "hex",
+    "dependencies",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "hexpm",
+    "shortDescription": "Hex packages, docs and advisories",
+    "longDescription": "Query hex.pm packages and releases, HexDocs module documentation, OSV.dev advisories and the Elixir Toolbox through a local MCP server, with a skill for evaluating, upgrading and auditing a project's dependencies.",
+    "developerName": "Josh Rotenberg",
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Check the health of this Hex package",
+      "Audit this project's mix.exs dependencies"
+    ]
+  }
+}

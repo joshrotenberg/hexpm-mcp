@@ -36,6 +36,9 @@ defmodule HexpmMcp.MCP.ServerTest do
              "name" => "hexpm-mcp",
              "version" => Mix.Project.config()[:version]
            }
+
+    assert result["instructions"] == Server.runtime().instructions
+    assert result["instructions"] =~ "audit_mix_deps"
   end
 
   test "lists all tools on one page with their public JSON schemas" do
@@ -135,10 +138,13 @@ defmodule HexpmMcp.MCP.ServerTest do
           "clientInfo" => %{"name" => "initialize-era", "version" => "1"}
         })
 
-      assert %{"result" => %{"protocolVersion" => @version, "serverInfo" => server_info}} =
-               post(port, initialize, @version).body |> JSON.decode!()
+      assert %{
+               "result" =>
+                 %{"protocolVersion" => @version, "serverInfo" => server_info} = initialized
+             } = post(port, initialize, @version).body |> JSON.decode!()
 
       assert server_info["name"] == "hexpm-mcp"
+      assert initialized["instructions"] == Server.runtime().instructions
 
       assert %{"result" => %{"tools" => tools} = listed} =
                post(port, legacy_request(2, "tools/list"), @version).body |> JSON.decode!()
@@ -194,7 +200,10 @@ defmodule HexpmMcp.MCP.ServerTest do
       {"Accept", "application/json, text/event-stream"},
       {"MCP-Protocol-Version", version},
       {"Mcp-Method", raw["method"]},
-      {"Content-Length", Integer.to_string(byte_size(body))}
+      {"Content-Length", Integer.to_string(byte_size(body))},
+      # The native listener keeps connections alive, and recv_all/2 reads until
+      # the server closes the socket.
+      {"Connection", "close"}
     ]
 
     lines = Enum.map(headers, fn {name, value} -> [name, ": ", value, "\r\n"] end)

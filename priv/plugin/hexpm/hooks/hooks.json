@@ -1,0 +1,17 @@
+{
+  "description": "hexpm: after an edit to mix.exs or mix.lock, point the agent at the dependency checks",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/mix-deps.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

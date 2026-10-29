@@ -1,0 +1,16 @@
+{
+  "name": "hexpm",
+  "description": "hex.pm, HexDocs, OSV.dev and Elixir Toolbox data for choosing, upgrading and auditing Elixir dependencies",
+  "author": {
+    "name": "Josh Rotenberg"
+  },
+  "repository": "https://github.com/joshrotenberg/hexpm-mcp",
+  "license": "MIT",
+  "keywords": [
+    "elixir",
+    "erlang",
+    "hex",
+    "dependencies",
+    "mcp"
+  ]
+}
