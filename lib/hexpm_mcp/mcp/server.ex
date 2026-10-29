@@ -7,9 +7,35 @@ defmodule HexpmMcp.MCP.Server do
   # compile time and baked in as a literal, so there is no runtime Mix dependency.
   @version Mix.Project.config()[:version]
 
+  # Sent in the initialize result and in server/discover. Clients that defer
+  # loading tool definitions show this in place of them, so it names the tools
+  # to start with for each task. It sits in context for the whole session, so
+  # keep it short.
+  @instructions """
+  Package data for the Elixir and Erlang ecosystem: hex.pm packages, releases, \
+  owners and downloads; HexDocs module and function documentation; OSV.dev \
+  security advisories; and the curated Elixir Toolbox catalog.
+
+  Use it when choosing, evaluating, upgrading or auditing a Hex dependency, and \
+  to read a package's API on HexDocs instead of recalling it.
+
+  Where to start:
+  - Find packages: search, toolbox_search, toolbox_groups, toolbox_trending.
+  - Evaluate one: health, then audit, compare, alternatives or dep_tree.
+  - A project's dependencies: audit_mix_deps and upgrade_check take the deps \
+  list from mix.exs as text.
+  - API lookups: docs lists a package's modules, search_docs finds an item, \
+  doc_item returns a module's documentation. Pass the version the project \
+  locks.
+
+  Resources: hex://{name}/info, hex://{name}/readme, hex://{name}/docs, \
+  toolbox://groups, toolbox://{group}/{category}.
+  """
+
   use Snodo.Server,
     name: "hexpm-mcp",
     version: @version,
+    instructions: @instructions,
     protocols: [
       Snodo.Protocol.V2026_07_28,
       Snodo.Protocol.V2025_11_25,
