@@ -47,6 +47,21 @@ defmodule HexpmMcp.CLITest do
 
       assert output =~ "--transport"
       assert output =~ "--port"
+      assert output =~ "init"
+    end
+
+    test "init parses to its own command with its defaults" do
+      assert {:ok, CLI.Init, args} = parse(["init"])
+      assert args[:host] == "both"
+      assert args[:output] == "text"
+      refute args[:dry_run]
+
+      assert {:ok, CLI.Init, %{dry_run: true, host: "codex", install_dir: "/tmp/m"}} =
+               parse(["init", "--dry-run", "--host", "codex", "--install-dir", "/tmp/m"])
+    end
+
+    test "init rejects a host outside the declared choices" do
+      capture_io(fn -> assert parse(["init", "--host", "cursor"]) == {:error, :usage} end)
     end
   end
 
