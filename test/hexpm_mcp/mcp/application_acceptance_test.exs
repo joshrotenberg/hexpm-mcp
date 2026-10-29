@@ -205,7 +205,10 @@ defmodule HexpmMcp.MCP.ApplicationAcceptanceTest do
       {"MCP-Protocol-Version", @protocol},
       {"Mcp-Method", raw["method"]},
       {"Mcp-Name", name},
-      {"Content-Length", Integer.to_string(byte_size(body))}
+      {"Content-Length", Integer.to_string(byte_size(body))},
+      # The native listener keeps connections alive, and recv_all/2 reads until
+      # the server closes the socket.
+      {"Connection", "close"}
     ]
 
     lines = Enum.map(headers, fn {key, value} -> [key, ": ", value, "\r\n"] end)
