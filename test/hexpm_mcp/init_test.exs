@@ -243,12 +243,16 @@ defmodule HexpmMcp.InitTest do
       Checking MCP server health...
 
       hexpm: https://hexpm-mcp.fly.dev/mcp (HTTP) - ✔ Connected
+      ├ Server "hexpm" is defined in multiple scopes with different endpoints: user (https://hexpm-mcp.fly.dev/mcp), project (mix run --no-halt -- --transport stdio).
+      └ Keep the correct endpoint and remove the others: `claude mcp remove hexpm -s user` or `claude mcp remove hexpm -s project`
       plugin:hexpm:hexpm: /x/bin/hexpm_mcp --transport stdio - ✔ Connected
+      claude.ai Hexpm Remote: https://hexpm-mcp.fly.dev/mcp - ✔ Connected
       github: npx -y github-mcp - ✔ Connected
       """
 
       assert Init.parse_claude_servers(output) == [
-               %{name: "hexpm", target: "https://hexpm-mcp.fly.dev/mcp (HTTP)"}
+               %{name: "hexpm", target: "https://hexpm-mcp.fly.dev/mcp (HTTP)"},
+               %{name: "claude.ai Hexpm Remote", target: "https://hexpm-mcp.fly.dev/mcp"}
              ]
     end
 

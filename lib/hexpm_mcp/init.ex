@@ -566,12 +566,15 @@ defmodule HexpmMcp.Init do
     end
   end
 
-  # Lines read `name: target - status`. A name cannot hold a colon, so plugin
-  # servers (`plugin:<plugin>:<server>: ...`), this one included, never match.
+  # Lines read `name: target - status`. A name is word characters, dots, `@`,
+  # dashes and spaces (`claude.ai Gmail`), so plugin servers
+  # (`plugin:<plugin>:<server>: ...`, this one included) never match, and
+  # neither do the indented `├ Server "x" is defined in multiple scopes...`
+  # warnings printed under a server.
   @doc false
   def parse_claude_servers(output) do
     for line <- String.split(output, "\n"),
-        [_, name, target] <- [Regex.run(~r/^([^\s:][^:]*): (.+?)(?: - .*)?$/, line)],
+        [_, name, target] <- [Regex.run(~r/^([\w.@-][\w .@-]*): (.+?)(?: - .*)?$/, line)],
         hexpm?(name, target),
         do: %{name: name, target: target}
   end
