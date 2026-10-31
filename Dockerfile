@@ -24,6 +24,8 @@ COPY config/config.exs config/prod.exs config/runtime.exs config/
 RUN mix deps.compile
 
 COPY lib lib
+# HexpmMcp.Init embeds priv/plugin/hexpm when it compiles.
+COPY priv priv
 RUN mix compile
 
 RUN mix release

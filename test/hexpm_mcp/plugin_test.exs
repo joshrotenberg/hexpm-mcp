@@ -70,6 +70,17 @@ defmodule HexpmMcp.PluginTest do
     end
   end
 
+  # HexpmMcp.Init reads priv/plugin/hexpm at compile time. v0.3.9 shipped a Hex
+  # package without priv and a Dockerfile that compiled before copying it, so
+  # neither built.
+  test "the Hex package and the Docker image both carry priv" do
+    assert "priv" in Mix.Project.config()[:package][:files]
+
+    dockerfile = File.read!(Path.expand("../../Dockerfile", __DIR__))
+    [before_compile, _] = String.split(dockerfile, "RUN mix compile", parts: 2)
+    assert before_compile =~ ~r/^COPY priv priv$/m
+  end
+
   defp run_hook(path) do
     payload =
       JSON.encode!(%{
