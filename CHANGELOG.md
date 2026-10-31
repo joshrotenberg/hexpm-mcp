@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.9](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.8...v0.3.9) (2026-10-29)
+
+
+### Features
+
+* add a Claude Code and Codex plugin with a dependency workflow skill (closes [#91](https://github.com/joshrotenberg/hexpm-mcp/issues/91)) ([#97](https://github.com/joshrotenberg/hexpm-mcp/issues/97)) ([bd7f740](https://github.com/joshrotenberg/hexpm-mcp/commit/bd7f74029a7bc408e4cc52be19f4b90f435e9cdc))
+* add an init subcommand that installs the plugin through the claude and codex CLIs (closes [#92](https://github.com/joshrotenberg/hexpm-mcp/issues/92)) ([#99](https://github.com/joshrotenberg/hexpm-mcp/issues/99)) ([6f8de59](https://github.com/joshrotenberg/hexpm-mcp/commit/6f8de593265a0fcc00695f7e2a8365246f90180e))
+* send server instructions to MCP clients (closes [#90](https://github.com/joshrotenberg/hexpm-mcp/issues/90)) ([#94](https://github.com/joshrotenberg/hexpm-mcp/issues/94)) ([34805c6](https://github.com/joshrotenberg/hexpm-mcp/commit/34805c6217240b90eb90ee9df0af6a44f3976979))
+
+
+### Bug Fixes
+
+* **deps:** update mint, cowlib and plug_crypto for security advisories (closes [#95](https://github.com/joshrotenberg/hexpm-mcp/issues/95)) ([#96](https://github.com/joshrotenberg/hexpm-mcp/issues/96)) ([8f5cd52](https://github.com/joshrotenberg/hexpm-mcp/commit/8f5cd521a2725fffcb1063b63c4e81d48377dc7a))
+* **deps:** update snodo and snodo_jsv to 0.4.3 (closes [#89](https://github.com/joshrotenberg/hexpm-mcp/issues/89)) ([#93](https://github.com/joshrotenberg/hexpm-mcp/issues/93)) ([a8804d6](https://github.com/joshrotenberg/hexpm-mcp/commit/a8804d6f32702664cab3e3a936eb0d808d209dd1))
+* **deps:** update snodo to 0.3.0 ([#87](https://github.com/joshrotenberg/hexpm-mcp/issues/87)) ([64fcfbd](https://github.com/joshrotenberg/hexpm-mcp/commit/64fcfbd608af00ddb45c4ba60e2647bb7ada8c9e))
+* pin release builds to an OTP that Burrito publishes ([#85](https://github.com/joshrotenberg/hexpm-mcp/issues/85)) ([fc9a3ce](https://github.com/joshrotenberg/hexpm-mcp/commit/fc9a3cea0c2bdf5765c4d41003882ed71bdd52ea))
+
 ## [0.3.8](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.7...v0.3.8) (2026-09-27)
 
 
