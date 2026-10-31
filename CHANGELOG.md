@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.10](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.9...v0.3.10) (2026-10-31)
+
+
+### Bug Fixes
+
+* ship priv in the Hex package and the Docker image (closes [#100](https://github.com/joshrotenberg/hexpm-mcp/issues/100)) ([#101](https://github.com/joshrotenberg/hexpm-mcp/issues/101)) ([c9d2e8c](https://github.com/joshrotenberg/hexpm-mcp/commit/c9d2e8c4465947444c1a8749275357df247b0c15))
+
 ## [0.3.9](https://github.com/joshrotenberg/hexpm-mcp/compare/v0.3.8...v0.3.9) (2026-10-29)
 
 
