@@ -52,7 +52,9 @@ defmodule HexpmMcp.MixProject do
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintainers: ["Josh Rotenberg"],
-      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE .formatter.exs)
+      # priv holds the plugin HexpmMcp.Init embeds at compile time; without it
+      # the package does not compile as a dependency.
+      files: ~w(lib priv mix.exs README.md CHANGELOG.md LICENSE .formatter.exs)
     ]
   end
 
